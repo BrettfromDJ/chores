@@ -2,32 +2,33 @@ import { redirect } from "next/navigation";
 import { getFamilyId } from "@/lib/auth/session";
 import { dataMode } from "@/lib/data";
 import { DEMO_EMAIL, DEMO_PASSWORD } from "@/lib/data/seed";
-import { PixelSprite } from "@/components/PixelSprite";
+import { GlowStage } from "@/components/game";
+import { Mascot } from "@/components/Mascot";
 import { LoginForm } from "./LoginForm";
 
 export default async function LoginPage() {
   if (await getFamilyId()) redirect("/");
   const demo = dataMode === "demo";
   return (
-    <main className="bg-dots relative flex min-h-dvh flex-col items-center justify-center px-5 py-10">
-      <div className="mb-6 flex items-end gap-2">
-        <PixelSprite creature="embercub" size={56} className="animate-bob" />
-        <PixelSprite creature="splashkit" size={64} className="animate-bob [animation-delay:.3s]" />
-        <PixelSprite creature="sproutle" size={56} className="animate-bob [animation-delay:.6s]" />
-      </div>
-      <h1 className="font-pixel text-2xl leading-tight text-ink drop-shadow-[3px_3px_0_#ffcc33]">PokéQuest</h1>
-      <p className="mt-3 max-w-xs text-center text-[15px] font-semibold text-ink-soft">Real chores. Real XP. Real card rewards.</p>
+    <main className="game-bg flex min-h-dvh flex-col items-center justify-center overflow-hidden px-5 py-10">
+      <GlowStage className="h-48 w-full max-w-sm">
+        <div className="relative flex items-end">
+          <Mascot creature="sproutle" size={92} className="-mr-4 animate-bob [animation-delay:.4s]" />
+          <Mascot creature="embercub" size={130} className="relative z-10 animate-bob" />
+          <Mascot creature="splashkit" size={92} className="-ml-4 animate-bob [animation-delay:.8s]" />
+        </div>
+      </GlowStage>
+      <h1 className="text-game mt-2 text-6xl leading-none">
+        Poké<span className="text-gold">Quest</span>
+      </h1>
+      <p className="mt-2 font-display text-xl text-cyan-glow drop-shadow-[0_2px_0_#14124a]">Real chores. Real XP. Real cards.</p>
 
-      <div className="pixel-box mt-8 w-full max-w-sm p-5">
-        <p className="pixel-label mb-4 text-ink-mute">Parent sign in</p>
+      <div className="panel mt-8 w-full max-w-sm p-5">
+        <p className="text-game mb-4 text-xl">Parent sign in</p>
         <LoginForm demo={demo} demoEmail={demo ? DEMO_EMAIL : ""} demoPassword={demo ? DEMO_PASSWORD : ""} />
       </div>
 
-      {demo && (
-        <p className="mt-6 max-w-sm text-center text-xs text-ink-mute">
-          Demo mode — data is stored on this server in <code>.data/</code>. Connect Supabase to enable real accounts.
-        </p>
-      )}
+      {demo && <p className="mt-6 max-w-sm text-center text-xs font-bold text-white/55">Demo mode: data is saved on this server. Connect Supabase to enable real accounts.</p>}
     </main>
   );
 }

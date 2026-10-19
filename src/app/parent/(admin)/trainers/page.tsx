@@ -1,7 +1,7 @@
 import { requireParent } from "@/lib/auth/session";
 import { loadFamily } from "@/lib/queries";
 import { ChildForm, Editable } from "@/components/parent/forms";
-import { PixelSprite } from "@/components/PixelSprite";
+import { Mascot } from "@/components/Mascot";
 import { getCreature } from "@/lib/creatures";
 
 export default async function TrainersAdmin() {
@@ -23,7 +23,7 @@ export default async function TrainersAdmin() {
             summary={
               <div className="flex items-center gap-3">
                 <span className="flex h-11 w-11 items-center justify-center rounded-xl" style={{ background: kid.color }}>
-                  <PixelSprite creature={kid.creature} size={34} />
+                  <Mascot creature={kid.creature} size={34} />
                 </span>
                 <div>
                   <p className="font-medium">{kid.name}</p>

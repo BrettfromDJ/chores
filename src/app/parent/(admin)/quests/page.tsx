@@ -1,7 +1,7 @@
 import { requireParent } from "@/lib/auth/session";
 import { loadFamily } from "@/lib/queries";
 import { ChoreForm, Editable } from "@/components/parent/forms";
-import { PixelSprite } from "@/components/PixelSprite";
+import { Mascot } from "@/components/Mascot";
 import type { Child, Chore } from "@/lib/types";
 
 export default async function QuestsAdmin() {
@@ -48,15 +48,15 @@ function ChoreSummary({ chore, kids }: { chore: Chore; kids: Child[] }) {
   const assigned = kids.filter((k) => chore.childIds.includes(k.id));
   return (
     <div className={`flex items-center gap-3 ${chore.active ? "" : "opacity-50"}`}>
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-xl">{chore.icon}</span>
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-xl">{chore.icon}</span>
       <div className="min-w-0 flex-1">
         <p className="truncate text-[15px] font-medium">
           {chore.title}
-          {!chore.active && <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-500">Paused</span>}
+          {!chore.active && <span className="ml-2 rounded bg-indigo-50 px-1.5 py-0.5 text-[11px] text-slate-500">Paused</span>}
         </p>
         <div className="mt-0.5 flex items-center gap-1">
           {assigned.map((k) => (
-            <PixelSprite key={k.id} creature={k.creature} size={16} title={k.name} />
+            <Mascot key={k.id} creature={k.creature} size={16} title={k.name} />
           ))}
           {assigned.length === 0 && <span className="text-xs text-amber-700">Not assigned</span>}
         </div>

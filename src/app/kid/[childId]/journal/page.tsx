@@ -1,6 +1,7 @@
 import { requireFamily } from "@/lib/auth/session";
 import { loadChild } from "@/lib/queries";
 import { localDate } from "@/lib/game";
+import { CoinIcon, LockIcon } from "@/components/game";
 
 type Entry =
   | { kind: "quest"; at: string; icon: string; title: string; xp: number; status: "pending" | "approved" | "rejected"; note: string | null }
@@ -23,65 +24,72 @@ export default async function JournalPage({ params }: { params: Promise<{ childI
     groups.set(day, [...(groups.get(day) ?? []), e]);
   }
   const today = localDate(new Date(), timezone);
-  const dayLabel = (ymd: string) => {
-    if (ymd === today) return "Today";
-    const d = new Date(`${ymd}T12:00:00Z`);
-    return d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", timeZone: "UTC" });
-  };
+  const dayLabel = (ymd: string) =>
+    ymd === today ? "Today" : new Date(`${ymd}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", timeZone: "UTC" });
 
   return (
-    <div className="space-y-8">
-      <section className="grid grid-cols-3 gap-3 text-center">
-        <Stat label="Total XP" value={stats.lifetimeXp} />
-        <Stat label="Quests" value={history.filter((c) => c.status === "approved").length} />
-        <Stat label="Badges" value={`${earned}/${badges.length}`} />
-      </section>
+    <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
+      <div className="space-y-6">
+        <section className="grid grid-cols-3 gap-3 text-center">
+          <Stat label="Total XP" value={stats.lifetimeXp} />
+          <Stat label="Quests" value={history.filter((c) => c.status === "approved").length} />
+          <Stat label="Badges" value={`${earned}/${badges.length}`} />
+        </section>
 
-      <section>
-        <h2 className="mb-3 px-1 font-pixel text-[11px] uppercase">Badges</h2>
-        <ul className="grid grid-cols-3 gap-3 sm:grid-cols-5">
-          {badges.map((b) => (
-            <li key={b.id} className={`pixel-box flex flex-col items-center p-3 text-center ${b.earned ? "" : "!bg-paper-deep"}`}>
-              <span className={`flex h-12 w-12 items-center justify-center text-2xl ${b.earned ? "animate-pop" : "opacity-40 grayscale"}`} aria-hidden>
-                {b.icon}
-              </span>
-              <p className="mt-1 text-[12px] font-extrabold leading-tight">{b.name}</p>
-              <p className="mt-1 text-[10px] font-semibold leading-tight text-ink-mute">{b.description}</p>
-              {!b.earned && (
-                <div className="mt-2 h-1.5 w-full bg-ink/15">
-                  <div className="h-full bg-sky" style={{ width: `${b.progress * 100}%` }} />
+        <section className="panel p-4">
+          <h2 className="text-game mb-3 text-[22px]">Badges</h2>
+          <ul className="grid grid-cols-3 gap-x-3 gap-y-4 sm:grid-cols-5 lg:grid-cols-4">
+            {badges.map((b) => (
+              <li key={b.id} className="flex flex-col items-center text-center">
+                <div className={`slot aspect-square w-full ${b.earned ? "" : "slot-locked"}`}>
+                  {b.earned ? (
+                    <span className="animate-pop text-4xl drop-shadow-[0_3px_0_rgba(20,18,74,.4)]">{b.icon}</span>
+                  ) : (
+                    <>
+                      <span className="text-3xl opacity-30 grayscale">{b.icon}</span>
+                      <LockIcon size={20} className="absolute right-1.5 top-1.5" />
+                      <span className="absolute inset-x-2 bottom-2 h-1.5 overflow-hidden rounded-full bg-night/30">
+                        <span className="block h-full rounded-full bg-white" style={{ width: `${b.progress * 100}%` }} />
+                      </span>
+                    </>
+                  )}
                 </div>
-              )}
-            </li>
-          ))}
-        </ul>
-      </section>
+                <p className="mt-1.5 font-display text-[13px] leading-tight">{b.name}</p>
+                <p className="text-[10px] font-bold leading-tight text-white/60">{b.description}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
 
-      <section>
-        <h2 className="mb-3 px-1 font-pixel text-[11px] uppercase">Adventure log</h2>
-        {groups.size === 0 && <div className="pixel-box p-5 text-center text-sm font-bold text-ink-mute">Your story starts with your first quest!</div>}
-        <div className="space-y-5">
+      <section className="panel p-4">
+        <h2 className="text-game mb-3 text-[22px]">Adventure log</h2>
+        {groups.size === 0 && <p className="panel-row p-4 text-center text-sm font-bold text-white/75">Your story starts with your first quest!</p>}
+        <div className="space-y-4">
           {[...groups].map(([day, list]) => (
             <div key={day}>
-              <p className="mb-2 px-1 text-xs font-extrabold uppercase tracking-wide text-ink-mute">{dayLabel(day)}</p>
-              <ul className="pixel-box divide-y-2 divide-dashed divide-ink/10">
+              <p className="mb-1.5 px-1 text-xs font-extrabold uppercase tracking-wider text-cyan-glow">{dayLabel(day)}</p>
+              <ul className="space-y-1.5">
                 {list.map((e, i) =>
                   e.kind === "reward" ? (
-                    <li key={i} className="flex items-center gap-3 bg-sun-light/60 px-3 py-3">
-                      <span className="text-xl">🎁</span>
-                      <p className="flex-1 font-extrabold">Unlocked {e.title}!</p>
-                      <span className="font-pixel text-[8px] text-berry">REWARD</span>
+                    <li key={i} className="flex items-center gap-3 rounded-[14px] border-2 border-gold/70 bg-gradient-to-r from-gold/30 to-magenta-glow/20 px-3 py-2.5">
+                      <span className="text-2xl">🎁</span>
+                      <p className="flex-1 font-display text-[16px]">Unlocked {e.title}!</p>
                     </li>
                   ) : (
-                    <li key={i} className="flex items-center gap-3 px-3 py-3">
+                    <li key={i} className="panel-row flex items-center gap-3 px-3 py-2.5">
                       <span className="text-xl">{e.icon}</span>
                       <div className="min-w-0 flex-1">
                         <p className="truncate font-bold">{e.title}</p>
-                        {e.note && <p className="text-xs font-semibold text-ink-mute">“{e.note}”</p>}
+                        {e.note && <p className="text-xs font-semibold text-white/60">“{e.note}”</p>}
                       </div>
-                      {e.status === "approved" && <span className="font-pixel text-[9px] text-leaf-dark">+{e.xp}</span>}
-                      {e.status === "pending" && <span className="font-pixel text-[8px] text-sun-dark">WAITING</span>}
-                      {e.status === "rejected" && <span className="font-pixel text-[8px] text-ink-mute">RETRY</span>}
+                      {e.status === "approved" && (
+                        <span className="flex items-center gap-1 font-display text-sm text-gold">
+                          <CoinIcon size={16} />+{e.xp}
+                        </span>
+                      )}
+                      {e.status === "pending" && <span className="font-display text-sm text-white/70">⏳ Waiting</span>}
+                      {e.status === "rejected" && <span className="font-display text-sm text-pink-300">Try again</span>}
                     </li>
                   ),
                 )}
@@ -96,9 +104,9 @@ export default async function JournalPage({ params }: { params: Promise<{ childI
 
 function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="pixel-box px-2 py-3">
-      <p className="font-pixel text-sm">{value}</p>
-      <p className="mt-2 text-[11px] font-extrabold uppercase text-ink-mute">{label}</p>
+    <div className="panel px-2 py-3">
+      <p className="text-game text-2xl leading-none">{value}</p>
+      <p className="mt-1 text-[11px] font-extrabold uppercase tracking-wide text-cyan-glow">{label}</p>
     </div>
   );
 }

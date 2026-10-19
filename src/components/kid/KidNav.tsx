@@ -13,19 +13,22 @@ export function KidNav({ childId }: { childId: string }) {
   const path = usePathname();
   const base = `/kid/${childId}`;
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 border-t-4 border-ink bg-paper pb-[env(safe-area-inset-bottom)]">
-      <ul className="mx-auto grid max-w-lg grid-cols-3 sm:max-w-2xl">
+    <nav className="fixed inset-x-0 bottom-0 z-30 px-3 pb-[max(.75rem,env(safe-area-inset-bottom))]">
+      <ul className="panel mx-auto grid max-w-lg grid-cols-3 gap-2 p-2">
         {TABS.map((t) => {
           const href = base + t.href;
           const active = path === href;
           return (
             <li key={t.label}>
-              <Link href={href} className="flex flex-col items-center gap-1.5 py-3" aria-current={active ? "page" : undefined}>
-                <span className={`text-xl transition-transform ${active ? "-translate-y-0.5 scale-110" : "opacity-60 grayscale"}`}>{t.icon}</span>
-                <span className={`font-pixel text-[8px] uppercase ${active ? "text-ink" : "text-ink-mute"}`}>
-                  {active && <span className="mr-1 inline-block animate-blink">▶</span>}
-                  {t.label}
+              <Link
+                href={href}
+                aria-current={active ? "page" : undefined}
+                className={`btn-game w-full !flex-col !gap-1 !px-2 !py-2 !text-[15px] ${active ? "btn-yellow" : "btn-navy"}`}
+              >
+                <span className={`text-2xl leading-none transition-transform ${active ? "scale-110" : ""}`} aria-hidden>
+                  {t.icon}
                 </span>
+                {t.label}
               </Link>
             </li>
           );

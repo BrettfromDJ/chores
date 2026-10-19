@@ -1,26 +1,32 @@
-/** Original capsule design for reward reveals (two halves so it can burst open). */
-export function QuestOrb({ color = "#ffcc33", size = 140, split = false }: { color?: string; size?: number; split?: boolean }) {
+/**
+ * Original "Quest Egg" used for reward reveals. Two halves split along a
+ * zigzag crack so it can burst open.
+ */
+export function QuestOrb({ size = 150, split = false }: { size?: number; split?: boolean }) {
   return (
-    <svg viewBox="0 0 32 32" width={size} height={size} className="pixelated overflow-visible" aria-hidden>
+    <svg viewBox="0 0 120 140" width={size} height={size * 1.17} className="overflow-visible drop-shadow-[0_12px_20px_rgba(10,8,60,.5)]" aria-hidden>
+      <defs>
+        <linearGradient id="egg-top" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#ff9be9" />
+          <stop offset="1" stopColor="#c62aa2" />
+        </linearGradient>
+        <linearGradient id="egg-bot" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#fff7d6" />
+          <stop offset="1" stopColor="#ffc94a" />
+        </linearGradient>
+      </defs>
       <g className={split ? "orb-top" : ""}>
-        <path d="M10 2h12v2h4v2h2v4h2v5H2v-5h2V6h2V4h4z" fill="#1d1a2f" />
-        <path d="M10 4h12v2h4v4h2v4H4v-4h2V6h4z" fill={color} />
-        <path d="M10 6h4v2h-4zM8 8h2v2H8z" fill="#fff" opacity=".8" />
-        <path d="M21 7h2v1h1v2h-1v1h-2v-1h-1V8h1z" fill="#fff" opacity=".5" />
+        <path d="M14 70 C14 30 36 4 60 4 C84 4 106 30 106 70 L96 62 L86 72 L76 62 L66 72 L56 62 L46 72 L36 62 L26 72 Z" fill="url(#egg-top)" stroke="#14124a" strokeWidth="5" strokeLinejoin="round" />
+        <ellipse cx="42" cy="28" rx="12" ry="7" transform="rotate(-35 42 28)" fill="#fff" opacity=".55" />
+        <circle cx="76" cy="30" r="7" fill="#fff" opacity=".35" />
+        <circle cx="56" cy="50" r="5" fill="#fff" opacity=".3" />
+        <circle cx="88" cy="52" r="4" fill="#fff" opacity=".3" />
       </g>
       <g className={split ? "orb-bottom" : ""}>
-        <path d="M2 17h28v5h-2v4h-2v2h-4v2H10v-2H6v-2H4v-4H2z" fill="#1d1a2f" />
-        <path d="M4 18h24v4h-2v4h-4v2H10v-2H6v-4H4z" fill="#fff8e8" />
-        <path d="M6 22h2v2H6zM24 22h2v2h-2z" fill="#efe0bf" />
+        <path d="M14 70 L26 72 L36 62 L46 72 L56 62 L66 72 L76 62 L86 72 L96 62 L106 70 C106 110 86 136 60 136 C34 136 14 110 14 70 Z" fill="url(#egg-bot)" stroke="#14124a" strokeWidth="5" strokeLinejoin="round" />
+        <path d="M60 92 l5 10 11 1.5 -8 7.5 2 11 -10 -5.5 -10 5.5 2 -11 -8 -7.5 11 -1.5z" fill="#ff7a3d" stroke="#14124a" strokeWidth="2.5" strokeLinejoin="round" />
+        <path d="M28 100 q6 22 30 30" fill="none" stroke="#fff" strokeWidth="4" strokeLinecap="round" opacity=".5" />
       </g>
-      {!split && (
-        <g>
-          <path d="M0 14h32v4H0z" fill="#1d1a2f" />
-          <path d="M16 11l5 5-5 5-5-5z" fill="#1d1a2f" />
-          <path d="M16 13l3 3-3 3-3-3z" fill="#8a5cf6" />
-          <path d="M16 13l1 1-1 1-1-1z" fill="#fff" />
-        </g>
-      )}
     </svg>
   );
 }

@@ -23,11 +23,11 @@ export function AdminNav({ pending }: { pending: number }) {
             <li key={l.href}>
               <Link
                 href={l.href}
-                className={`relative flex items-center gap-1.5 whitespace-nowrap px-3 py-2.5 text-sm font-medium transition ${active ? "text-slate-900" : "text-slate-500 hover:text-slate-800"}`}
+                className={`relative flex items-center gap-1.5 whitespace-nowrap px-3 py-2.5 text-sm font-medium transition ${active ? "text-royal" : "text-slate-500 hover:text-slate-800"}`}
               >
                 {l.label}
                 {l.href === "/parent" && pending > 0 && <span className="rounded-full bg-amber-400 px-1.5 text-[11px] font-bold text-slate-900">{pending}</span>}
-                {active && <span className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-slate-900" />}
+                {active && <span className="absolute inset-x-3 bottom-0 h-[3px] rounded-full bg-royal" />}
               </Link>
             </li>
           );

@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { requireParent } from "@/lib/auth/session";
 import { loadFamily } from "@/lib/queries";
-import { PixelSprite } from "@/components/PixelSprite";
+import { Mascot } from "@/components/Mascot";
 
 const STATUS = {
   pending: "bg-amber-100 text-amber-800",
   approved: "bg-emerald-100 text-emerald-800",
-  rejected: "bg-slate-100 text-slate-600",
+  rejected: "bg-indigo-50 text-slate-600",
 } as const;
 
 export default async function HistoryAdmin({ searchParams }: { searchParams: Promise<{ kid?: string; status?: string }> }) {
@@ -26,7 +26,7 @@ export default async function HistoryAdmin({ searchParams }: { searchParams: Pro
     const q = p.toString();
     return `/parent/history${q ? `?${q}` : ""}`;
   };
-  const chip = (active: boolean) => `rounded-full px-3 py-1.5 text-sm font-medium transition ${active ? "bg-slate-900 text-white" : "bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50"}`;
+  const chip = (active: boolean) => `rounded-full px-3 py-1.5 text-sm font-medium transition ${active ? "bg-royal text-white" : "bg-white text-slate-600 ring-1 ring-indigo-100 hover:bg-slate-50"}`;
 
   return (
     <div className="space-y-5">
@@ -55,7 +55,7 @@ export default async function HistoryAdmin({ searchParams }: { searchParams: Pro
         {rows.length === 0 ? (
           <p className="px-4 py-8 text-center text-sm text-slate-500">Nothing here yet.</p>
         ) : (
-          <ul className="divide-y divide-slate-100">
+          <ul className="divide-y divide-indigo-50">
             {rows.map((c) => {
               const child = kids.get(c.childId);
               return (
@@ -64,7 +64,7 @@ export default async function HistoryAdmin({ searchParams }: { searchParams: Pro
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{c.choreTitle}</p>
                     <p className="flex items-center gap-1 text-xs text-slate-500">
-                      {child && <PixelSprite creature={child.creature} size={14} />}
+                      {child && <Mascot creature={child.creature} size={14} />}
                       {child?.name ?? "Removed"} · {fmt.format(new Date(c.submittedAt))}
                       {c.note && <span className="truncate"> · “{c.note}”</span>}
                     </p>

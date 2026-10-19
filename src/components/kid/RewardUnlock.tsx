@@ -9,7 +9,7 @@ import type { Reward } from "@/lib/types";
 
 type Stage = "drop" | "shake" | "burst" | "reveal";
 
-const CONFETTI_COLORS = ["#ffcc33", "#e8423f", "#3d6cf0", "#38b26b", "#8a5cf6", "#ffffff"];
+const CONFETTI_COLORS = ["#ffcf3a", "#ff4fd8", "#3ee8ff", "#3ee07a", "#9f7dff", "#ffffff"];
 
 /**
  * Full-screen reward reveal: capsule drops in, shakes three times, bursts open
@@ -54,7 +54,8 @@ export function RewardUnlock({
           dx: `${Math.cos(angle) * dist}px`,
           dy: `${Math.sin(angle) * dist}px`,
           rot: `${Math.random() * 720 - 360}deg`,
-          size: 6 + Math.round(Math.random() * 3) * 2,
+          size: 7 + Math.round(Math.random() * 4) * 2,
+          round: i % 3 === 0,
           color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
           delay: Math.random() * 0.15,
         };
@@ -80,7 +81,8 @@ export function RewardUnlock({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden bg-ink/95 px-6 text-white"
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center overflow-hidden px-6 text-white"
+      style={{ background: "radial-gradient(circle at 50% 45%, #5a3df0 0%, #2a1f9e 55%, #120f45 100%)" }}
       role="dialog"
       aria-modal="true"
       aria-label={`Reward unlocked: ${reward.title}`}
@@ -93,12 +95,12 @@ export function RewardUnlock({
       >
         <div
           className="h-full w-full animate-spin-slow"
-          style={{ background: "repeating-conic-gradient(from 0deg, rgba(255,204,51,.16) 0deg 10deg, transparent 10deg 24deg)" }}
+          style={{ background: "repeating-conic-gradient(from 0deg, rgba(255,95,224,.2) 0deg 10deg, transparent 10deg 24deg)" }}
         />
       </div>
 
-      <p className={`relative mb-6 font-pixel text-[11px] uppercase tracking-widest text-sun ${revealed ? "" : "animate-blink"}`}>
-        {revealed ? "★ Reward unlocked ★" : stage === "drop" ? "Whoa…" : "Something's happening!"}
+      <p key={revealed ? "r" : stage} className={`text-game relative mb-4 text-center ${revealed ? "type-in text-4xl text-gold" : "animate-pulse text-2xl"}`}>
+        {revealed ? "Reward Unlocked!" : stage === "drop" ? "Whoa…" : "The Quest Egg is hatching!"}
       </p>
 
       <div className="relative flex h-[340px] w-full max-w-[240px] items-center justify-center">
@@ -110,7 +112,7 @@ export function RewardUnlock({
 
         {revealed && (
           <>
-            <div className="glow-pulse absolute h-72 w-72 rounded-full bg-sun/40 blur-3xl" aria-hidden />
+            <div className="absolute h-80 w-80 animate-glow-breathe rounded-full blur-2xl" style={{ background: "radial-gradient(circle, rgba(255,79,216,.85), rgba(255,207,58,.35) 50%, transparent 70%)" }} aria-hidden />
             {confetti.map((c, i) => (
               <span
                 key={i}
@@ -120,6 +122,7 @@ export function RewardUnlock({
                     width: c.size,
                     height: c.size,
                     background: c.color,
+                    borderRadius: c.round ? "999px" : "3px",
                     animationDelay: `${c.delay}s`,
                     ["--dx"]: c.dx,
                     ["--dy"]: c.dy,
@@ -139,8 +142,8 @@ export function RewardUnlock({
       {stage === "burst" && <div className="flash pointer-events-none absolute inset-0 bg-white" aria-hidden />}
 
       <div className={`relative mt-8 max-w-xs text-center transition-opacity duration-500 ${revealed ? "opacity-100" : "opacity-0"}`}>
-        <p className="type-in font-pixel text-base leading-relaxed">{reward.title}</p>
-        <p className="mt-3 text-[15px] font-semibold text-white/75">
+        <p className="text-game text-3xl leading-tight">{reward.title}</p>
+        <p className="mt-2 text-[16px] font-bold text-white/80">
           Amazing work, {kidName}! {replay ? "This one's in your trophy case." : "Show this to your parent to claim your reward."}
         </p>
         <button
@@ -149,8 +152,7 @@ export function RewardUnlock({
             close();
           }}
           disabled={!revealed || pending}
-          className="pixel-btn mt-6 !px-8 !py-4"
-          style={{ ["--btn" as string]: "#38b26b", ["--ink" as string]: "#ffffff" }}
+          className="btn-game btn-green mt-6 !px-12 !py-4 !text-2xl"
         >
           {pending ? "Saving…" : "Awesome!"}
         </button>

@@ -3,7 +3,7 @@
 import { createContext, useActionState, useContext, useEffect, useState, useTransition } from "react";
 import { deleteChild, deleteChore, deleteReward, saveChild, saveChore, saveReward, setDelivered } from "@/app/actions/parent";
 import { CREATURES } from "@/lib/creatures";
-import { PixelSprite } from "@/components/PixelSprite";
+import { Mascot } from "@/components/Mascot";
 import { CardArt } from "@/components/CardArt";
 import { Flash } from "./Flash";
 import type { Child, Chore, Reward } from "@/lib/types";
@@ -54,7 +54,7 @@ export function ChoreForm({ chore, kids }: { chore?: Chore; kids: Child[] }) {
               type="button"
               key={i}
               onClick={() => setIcon(i)}
-              className={`flex h-9 w-9 items-center justify-center rounded-lg text-lg transition ${icon === i ? "bg-slate-900 ring-2 ring-slate-900 ring-offset-2" : "bg-slate-100 hover:bg-slate-200"}`}
+              className={`flex h-9 w-9 items-center justify-center rounded-lg text-lg transition ${icon === i ? "bg-royal ring-2 ring-royal ring-offset-2" : "bg-indigo-50 hover:bg-indigo-100"}`}
               aria-pressed={icon === i}
             >
               {i}
@@ -71,7 +71,7 @@ export function ChoreForm({ chore, kids }: { chore?: Chore; kids: Child[] }) {
           <Label>Repeats</Label>
           <div className="flex gap-2">
             {(["daily", "weekly"] as const).map((f) => (
-              <label key={f} className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium capitalize has-[:checked]:border-slate-900 has-[:checked]:bg-slate-900 has-[:checked]:text-white">
+              <label key={f} className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg border border-indigo-100 px-3 py-2 text-sm font-medium capitalize has-[:checked]:border-royal has-[:checked]:bg-royal has-[:checked]:text-white">
                 <input type="radio" name="frequency" value={f} defaultChecked={(chore?.frequency ?? "daily") === f} className="sr-only" />
                 {f}
               </label>
@@ -82,18 +82,18 @@ export function ChoreForm({ chore, kids }: { chore?: Chore; kids: Child[] }) {
           <Label>Assigned to</Label>
           <div className="flex flex-wrap gap-2">
             {kids.map((k) => (
-              <label key={k.id} className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-2 text-sm font-medium has-[:checked]:border-slate-900 has-[:checked]:bg-slate-50">
-                <input type="checkbox" name="childIds" value={k.id} defaultChecked={chore ? chore.childIds.includes(k.id) : true} className="accent-slate-900" />
-                <PixelSprite creature={k.creature} size={18} />
+              <label key={k.id} className="flex cursor-pointer items-center gap-1.5 rounded-lg border border-indigo-100 px-3 py-2 text-sm font-medium has-[:checked]:border-royal has-[:checked]:bg-slate-50">
+                <input type="checkbox" name="childIds" value={k.id} defaultChecked={chore ? chore.childIds.includes(k.id) : true} className="accent-royal" />
+                <Mascot creature={k.creature} size={18} />
                 {k.name}
               </label>
             ))}
           </div>
         </fieldset>
       </div>
-      <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+      <div className="flex items-center justify-between gap-3 border-t border-indigo-50 pt-4">
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" name="active" defaultChecked={chore?.active ?? true} className="h-4 w-4 accent-slate-900" />
+          <input type="checkbox" name="active" defaultChecked={chore?.active ?? true} className="h-4 w-4 accent-royal" />
           Active
         </label>
         <div className="flex gap-2">
@@ -177,11 +177,11 @@ export function RewardForm({ reward, kids, defaultChildId, nextOrder }: { reward
                 type="button"
                 key={c.id}
                 onClick={() => setImage(`art:${c.id}`)}
-                className={`rounded-lg p-1 transition ${image === `art:${c.id}` ? "bg-slate-900" : "bg-slate-100 hover:bg-slate-200"}`}
+                className={`rounded-lg p-1 transition ${image === `art:${c.id}` ? "bg-royal" : "bg-indigo-50 hover:bg-indigo-100"}`}
                 aria-label={`${c.name} card art`}
                 aria-pressed={image === `art:${c.id}`}
               >
-                <PixelSprite creature={c.id} size={28} />
+                <Mascot creature={c.id} size={28} />
               </button>
             ))}
           </div>
@@ -194,7 +194,7 @@ export function RewardForm({ reward, kids, defaultChildId, nextOrder }: { reward
           />
         </div>
         {!locked && <p className="text-xs text-slate-500">This reward is unlocked, so its cost and owner can&apos;t change.</p>}
-        <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+        <div className="flex justify-end gap-2 border-t border-indigo-50 pt-4">
           {reward && locked && <DeleteButton label="Delete" confirm={`Delete “${reward.title}”?`} run={() => deleteReward(reward.id)} />}
           <button className="btn-primary" disabled={pending}>
             {pending ? "Saving…" : reward ? "Save" : "Add reward"}
@@ -238,7 +238,7 @@ export function ChildForm({ child }: { child?: Child }) {
       <input type="hidden" name="color" value={color} />
       <div className="flex items-center gap-4">
         <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl" style={{ background: color }}>
-          <PixelSprite creature={creature} size={52} />
+          <Mascot creature={creature} size={52} />
         </span>
         <label className="block flex-1">
           <Label>Name</Label>
@@ -253,10 +253,10 @@ export function ChildForm({ child }: { child?: Child }) {
               type="button"
               key={c.id}
               onClick={() => setCreature(c.id)}
-              className={`flex flex-col items-center rounded-xl border p-2 text-xs font-medium transition ${creature === c.id ? "border-slate-900 bg-slate-50" : "border-slate-200 hover:bg-slate-50"}`}
+              className={`flex flex-col items-center rounded-xl border p-2 text-xs font-medium transition ${creature === c.id ? "border-royal bg-slate-50" : "border-indigo-100 hover:bg-slate-50"}`}
               aria-pressed={creature === c.id}
             >
-              <PixelSprite creature={c.id} size={36} />
+              <Mascot creature={c.id} size={36} />
               {c.name}
             </button>
           ))}
@@ -270,7 +270,7 @@ export function ChildForm({ child }: { child?: Child }) {
               type="button"
               key={c}
               onClick={() => setColor(c)}
-              className={`h-8 w-8 rounded-full transition ${color === c ? "ring-2 ring-slate-900 ring-offset-2" : ""}`}
+              className={`h-8 w-8 rounded-full transition ${color === c ? "ring-2 ring-royal ring-offset-2" : ""}`}
               style={{ background: c }}
               aria-label={`Color ${c}`}
               aria-pressed={color === c}
@@ -278,7 +278,7 @@ export function ChildForm({ child }: { child?: Child }) {
           ))}
         </div>
       </div>
-      <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+      <div className="flex justify-end gap-2 border-t border-indigo-50 pt-4">
         {child && <DeleteButton label="Remove" confirm={`Remove ${child.name}? Their XP, history and rewards are deleted.`} run={() => deleteChild(child.id)} />}
         <button className="btn-primary" disabled={pending}>
           {pending ? "Saving…" : child ? "Save" : "Add kid"}
@@ -322,7 +322,7 @@ export function Editable({ summary, children, defaultOpen = false }: { summary: 
         <span className={`text-slate-400 transition-transform ${open ? "rotate-180" : ""}`}>⌄</span>
       </button>
       {open && (
-        <div className="border-t border-slate-100 p-4">
+        <div className="border-t border-indigo-50 p-4">
           <CloseContext.Provider value={close}>{children}</CloseContext.Provider>
         </div>
       )}

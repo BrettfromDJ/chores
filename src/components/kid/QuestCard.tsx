@@ -2,16 +2,16 @@
 
 import { useOptimistic, useState, useTransition } from "react";
 import { turnInQuest } from "@/app/actions/kid";
+import { CoinIcon } from "@/components/game";
 import type { CompletionStatus } from "@/lib/types";
 
 interface Props {
   childId: string;
-  color: string;
   chore: { id: string; title: string; description: string; icon: string; xp: number };
   status: CompletionStatus | null;
 }
 
-export function QuestCard({ childId, color, chore, status }: Props) {
+export function QuestCard({ childId, chore, status }: Props) {
   const [optimistic, setOptimistic] = useOptimistic(status);
   const [pending, startTransition] = useTransition();
   const [burst, setBurst] = useState(0);
@@ -32,38 +32,40 @@ export function QuestCard({ childId, color, chore, status }: Props) {
   const waiting = optimistic === "pending";
 
   return (
-    <div className={`pixel-box relative flex items-center gap-3 p-3 transition-colors ${done ? "!bg-leaf/10" : ""}`}>
+    <div className={`panel-row relative flex items-center gap-3 p-2.5 transition-colors ${done ? "!bg-mint/15" : ""}`}>
       <span
-        className={`flex h-12 w-12 shrink-0 items-center justify-center border-[3px] border-ink text-2xl ${burst ? "animate-wiggle" : ""}`}
         key={burst}
-        style={{ background: done ? "#8de0ad" : waiting ? "#ffe58a" : `${color}22` }}
+        className={`slot h-14 w-14 shrink-0 text-[28px] ${burst ? "animate-wiggle" : ""}`}
+        style={done ? { background: "linear-gradient(180deg,#5ef08f,#18b24b)", borderColor: "#a8ffc6" } : waiting ? { background: "linear-gradient(180deg,#ffe066,#f5b400)", borderColor: "#fff1a8" } : undefined}
         aria-hidden
       >
         {chore.icon}
       </span>
       <div className="min-w-0 flex-1">
-        <p className={`font-extrabold leading-tight ${done ? "text-ink-mute line-through decoration-2" : ""}`}>{chore.title}</p>
-        {chore.description && <p className="mt-0.5 line-clamp-1 text-[13px] font-semibold text-ink-mute">{chore.description}</p>}
-        {error && <p className="mt-1 text-xs font-bold text-berry">{error}</p>}
+        <p className={`font-display text-[17px] leading-tight ${done ? "text-white/60 line-through decoration-2" : "text-white"}`}>{chore.title}</p>
+        <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-night/60 py-0.5 pl-0.5 pr-2 font-display text-[13px] text-gold">
+          <CoinIcon size={16} /> +{chore.xp} XP
+        </p>
+        {error && <p className="mt-1 text-xs font-bold text-pink-300">{error}</p>}
       </div>
 
       <div className="relative shrink-0">
         {done ? (
-          <span className="flex flex-col items-center px-2 font-pixel text-[9px] text-leaf-dark">
-            <span className="text-lg leading-none">✓</span>+{chore.xp}
+          <span className="flex h-11 w-11 items-center justify-center rounded-full border-[3px] border-night bg-mint text-xl text-white shadow-[0_3px_0_#14124a]" aria-label="Approved">
+            ✓
           </span>
         ) : waiting ? (
-          <span className="flex flex-col items-center gap-1 px-1 text-center font-pixel text-[7px] uppercase leading-tight text-sun-dark">
-            <span className="animate-blink text-base leading-none">⏳</span>
+          <span className="flex flex-col items-center px-1 font-display text-[13px] leading-tight text-gold" aria-label="Waiting for approval">
+            <span className="animate-pulse text-xl leading-none">⏳</span>
             Waiting
           </span>
         ) : (
-          <button onClick={turnIn} disabled={pending} className="pixel-btn !m-1 !px-3" style={{ ["--btn" as string]: color }}>
-            +{chore.xp} XP
+          <button onClick={turnIn} disabled={pending} className="btn-game btn-green !px-4 !py-2.5 !text-[17px]">
+            Done!
           </button>
         )}
         {burst > 0 && waiting && (
-          <span key={burst} className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 animate-float font-pixel text-[10px] text-sun-dark">
+          <span key={burst} className="text-game pointer-events-none absolute -top-3 left-1/2 -translate-x-1/2 animate-float whitespace-nowrap text-sm text-gold">
             ★ Sent!
           </span>
         )}

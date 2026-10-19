@@ -41,7 +41,7 @@ export function Toaster() {
       <p
         key={shown.key}
         role="status"
-        className={`animate-slide-up rounded-xl px-4 py-3 text-sm font-medium shadow-lg ${shown.ok ? "bg-slate-900 text-white" : "bg-red-600 text-white"}`}
+        className={`animate-slide-up rounded-xl px-4 py-3 text-sm font-medium shadow-lg ${shown.ok ? "bg-royal text-white" : "bg-red-600 text-white"}`}
       >
         {shown.message}
       </p>

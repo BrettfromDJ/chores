@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireParent } from "@/lib/auth/session";
 import { loadFamily } from "@/lib/queries";
 import { activeGoal, localDate } from "@/lib/game";
-import { PixelSprite } from "@/components/PixelSprite";
+import { Mascot } from "@/components/Mascot";
 import { ApprovalQueue, type QueueItem } from "@/components/parent/ApprovalQueue";
 
 export default async function ParentHome() {
@@ -67,7 +67,7 @@ export default async function ParentHome() {
               <li key={kid.id} className="card p-4">
                 <div className="flex items-center gap-3">
                   <span className="flex h-12 w-12 items-center justify-center rounded-xl" style={{ background: `${kid.color}22` }}>
-                    <PixelSprite creature={kid.creature} size={36} />
+                    <Mascot creature={kid.creature} size={36} />
                   </span>
                   <div className="flex-1">
                     <p className="font-semibold">{kid.name}</p>
@@ -89,7 +89,7 @@ export default async function ParentHome() {
                         {Math.min(s.balance, goal.xpCost)}/{goal.xpCost}
                       </span>
                     </div>
-                    <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100">
+                    <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-indigo-50">
                       <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, (s.balance / goal.xpCost) * 100)}%`, background: kid.color }} />
                     </div>
                   </div>
@@ -114,7 +114,7 @@ export default async function ParentHome() {
 
 function Metric({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="rounded-lg bg-slate-50 px-2 py-2">
+    <div className="rounded-lg bg-indigo-50/50 px-2 py-2">
       <dd className="text-sm font-semibold">{value}</dd>
       <dt className="text-[11px] text-slate-500">{label}</dt>
     </div>

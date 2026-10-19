@@ -2,7 +2,7 @@ import { requireParent } from "@/lib/auth/session";
 import { loadFamily } from "@/lib/queries";
 import { DeliveredToggle, Editable, RewardForm } from "@/components/parent/forms";
 import { CardArt } from "@/components/CardArt";
-import { PixelSprite } from "@/components/PixelSprite";
+import { Mascot } from "@/components/Mascot";
 import type { Reward } from "@/lib/types";
 
 export default async function RewardsAdmin() {
@@ -31,7 +31,7 @@ export default async function RewardsAdmin() {
         return (
           <section key={kid.id} className="space-y-3">
             <div className="flex items-center gap-2">
-              <PixelSprite creature={kid.creature} size={24} />
+              <Mascot creature={kid.creature} size={24} />
               <h2 className="font-semibold">{kid.name}</h2>
               <span className="text-sm text-slate-500">· {stats[kid.id].balance} XP available</span>
             </div>
@@ -46,7 +46,7 @@ export default async function RewardsAdmin() {
             </div>
 
             {earned.length > 0 && (
-              <div className="card divide-y divide-slate-100">
+              <div className="card divide-y divide-indigo-50">
                 {earned.map((r) => (
                   <div key={r.id} className="flex items-center gap-3 px-4 py-3">
                     <CardArt imageUrl={r.imageUrl} title={r.title} mini className="w-9 shrink-0 !border-2 !p-[3px]" />
@@ -77,7 +77,7 @@ function RewardSummary({ reward, badge, progress }: { reward: Reward; badge: str
         <p className="truncate text-[15px] font-medium">{reward.title}</p>
         <p className="text-xs text-slate-500">{badge}</p>
         {progress !== undefined && (
-          <div className="mt-1.5 h-1.5 w-full max-w-48 overflow-hidden rounded-full bg-slate-100">
+          <div className="mt-1.5 h-1.5 w-full max-w-48 overflow-hidden rounded-full bg-indigo-50">
             <div className="h-full rounded-full bg-emerald-500" style={{ width: `${Math.min(100, progress * 100)}%` }} />
           </div>
         )}

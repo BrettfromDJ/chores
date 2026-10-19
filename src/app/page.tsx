@@ -3,8 +3,8 @@ import { requireFamily } from "@/lib/auth/session";
 import { loadFamily } from "@/lib/queries";
 import { activeGoal } from "@/lib/game";
 import { getCreature } from "@/lib/creatures";
-import { PixelSprite } from "@/components/PixelSprite";
-import { XpBar } from "@/components/XpBar";
+import { GameBar, GlowStage, LockIcon } from "@/components/game";
+import { Mascot } from "@/components/Mascot";
 
 export const dynamic = "force-dynamic";
 
@@ -13,66 +13,79 @@ export default async function TrainerSelect() {
   const { family, children, stats, rewards, completions } = await loadFamily(familyId);
 
   return (
-    <main className="bg-dots min-h-dvh pb-[max(2rem,env(safe-area-inset-bottom))]">
-      <div className="mx-auto max-w-lg px-4 pt-[max(1.5rem,env(safe-area-inset-top))] sm:max-w-3xl">
-        <header className="flex items-center justify-between">
+    <main className="game-bg relative min-h-dvh overflow-x-hidden pb-[max(2rem,env(safe-area-inset-bottom))]">
+      <div className="pointer-events-none absolute left-0 top-0 h-28 w-80 bg-night/70 [clip-path:polygon(0_0,100%_0,0_100%)]" aria-hidden />
+      <div className="relative mx-auto max-w-lg px-4 pt-[max(1rem,env(safe-area-inset-top))] lg:max-w-5xl">
+        <header className="flex items-start justify-between gap-3 py-3">
           <div>
-            <p className="pixel-label text-ink-mute">{family?.name ?? "Your family"}</p>
-            <h1 className="mt-2 font-pixel text-lg leading-snug">Who&apos;s playing?</h1>
+            <p className="text-sm font-extrabold uppercase tracking-wider text-cyan-glow">{family?.name ?? "Your family"}</p>
+            <h1 className="text-game text-4xl leading-tight">Choose your trainer</h1>
           </div>
-          <Link href="/parent" className="pixel-btn !px-3 !py-2.5" style={{ ["--btn" as string]: "#1d1a2f" }} aria-label="Parent area">
-            <LockIcon /> Parent
+          <Link href="/parent" className="btn-game btn-lilac shrink-0 !px-3 !py-2.5 !text-base" aria-label="Parent area">
+            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden>
+              <path d="M7.5 10V7.5a4.5 4.5 0 019 0V10" fill="none" stroke="#2f22b0" strokeWidth="3" strokeLinecap="round" />
+              <rect x="5" y="10" width="14" height="11" rx="3" fill="#2f22b0" />
+            </svg>
+            Parent
           </Link>
         </header>
 
         {children.length === 0 ? (
-          <div className="pixel-box mt-8 p-6 text-center">
-            <PixelSprite creature="pebblit" size={72} className="mx-auto animate-bob" />
-            <p className="mt-4 font-bold">No trainers yet!</p>
-            <p className="mt-1 text-sm text-ink-mute">A parent can add kids in the Parent area.</p>
+          <div className="panel mt-8 p-6 text-center">
+            <Mascot creature="pebblit" size={110} className="mx-auto animate-bob" />
+            <p className="text-game mt-3 text-2xl">No trainers yet!</p>
+            <p className="mt-1 font-bold text-white/75">A parent can add kids in the Parent area.</p>
           </div>
         ) : (
-          <ul className="mt-8 grid gap-5 sm:grid-cols-2">
+          <ul className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(300px,340px))] lg:justify-center">
             {children.map((child, i) => {
               const s = stats[child.id];
               const goal = activeGoal(rewards, child.id);
               const pending = completions.filter((c) => c.childId === child.id && c.status === "pending").length;
               const creature = getCreature(child.creature);
               return (
-                <li key={child.id} className="animate-slide-up" style={{ animationDelay: `${i * 80}ms` }}>
-                  <Link href={`/kid/${child.id}`} className="pixel-box group block overflow-hidden transition-transform active:scale-[.98] sm:hover:-translate-y-1">
-                    <div className="bg-scanlines relative flex h-32 items-end justify-center" style={{ background: `linear-gradient(180deg, ${child.color}, ${child.color}cc)` }}>
-                      <div className="absolute inset-x-0 bottom-0 h-6 bg-black/15" />
-                      <PixelSprite creature={child.creature} size={104} className="relative -mb-1 animate-bob drop-shadow-[0_4px_0_rgba(0,0,0,.2)]" />
-                      <span className="absolute left-3 top-3 bg-white/90 px-2 py-1 font-pixel text-[8px] uppercase text-ink">{creature.element}</span>
-                      {s.streak > 0 && <span className="absolute right-3 top-3 bg-white/90 px-2 py-1 font-pixel text-[8px] text-ink">🔥 {s.streak}</span>}
-                    </div>
-                    <div className="p-4">
-                      <div className="flex items-baseline justify-between">
-                        <p className="font-pixel text-sm">{child.name}</p>
-                        <p className="font-pixel text-[10px] text-ink-mute">Lv {s.level}</p>
+                <li key={child.id} className="animate-slide-up" style={{ animationDelay: `${i * 90}ms` }}>
+                  <Link href={`/kid/${child.id}`} className="panel group block overflow-hidden p-4 transition-transform active:scale-[.98] lg:hover:-translate-y-1">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-game text-3xl leading-none">{child.name}</p>
+                        <p className="mt-1 font-display text-lg text-cyan-glow drop-shadow-[0_2px_0_#14124a]">{s.levelTitle}</p>
                       </div>
-                      <XpBar className="mt-3" value={s.lifetimeXp - s.levelFloor} max={s.levelCeil - s.levelFloor} color={child.color} label="Level progress" />
-                      <div className="mt-3 flex items-center justify-between text-sm font-bold text-ink-soft">
-                        <span>{goal ? `🎯 ${goal.title}` : "🏆 All goals unlocked!"}</span>
-                        {pending > 0 && <span className="text-xs text-sun-dark">⏳ {pending}</span>}
-                      </div>
+                      <span className="rounded-lg border-2 border-white/70 bg-lilac px-2 py-0.5 font-display text-sm text-night">Lv {s.level}</span>
                     </div>
+                    <GlowStage className="-mx-4 h-44" arrows={false}>
+                      <Mascot creature={child.creature} size={150} className="relative animate-bob drop-shadow-[0_10px_16px_rgba(20,18,74,.45)]" />
+                    </GlowStage>
+                    <div className="mt-1 flex items-center justify-between text-sm font-extrabold">
+                      <span className="text-white/80">
+                        {creature.name} · 🔥 {s.streak}
+                      </span>
+                      {pending > 0 && <span className="text-gold">⏳ {pending} waiting</span>}
+                    </div>
+                    {goal ? (
+                      <GameBar
+                        className="mt-2"
+                        value={s.balance}
+                        max={goal.xpCost}
+                        from="#ffe066"
+                        to="#f5a000"
+                        ariaLabel="Reward progress"
+                        label={`🎯 ${goal.title}`}
+                      />
+                    ) : (
+                      <p className="mt-2 text-center font-display text-gold">🏆 All goals unlocked!</p>
+                    )}
+                    <span className="btn-game btn-yellow mt-4 w-full !py-3.5 !text-2xl">Play</span>
                   </Link>
                 </li>
               );
             })}
           </ul>
         )}
+        <p className="mt-8 flex items-center justify-center gap-1.5 text-center text-xs font-bold text-white/50">
+          <LockIcon size={14} /> XP is only awarded after a parent approves.
+        </p>
       </div>
     </main>
-  );
-}
-
-function LockIcon() {
-  return (
-    <svg width="10" height="12" viewBox="0 0 5 6" className="pixelated" aria-hidden>
-      <path d="M1 0h3v1h1v2H4V1H1v2H0V1h1zM0 3h5v3H0z" fill="currentColor" />
-    </svg>
   );
 }

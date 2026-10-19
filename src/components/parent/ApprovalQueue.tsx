@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { approveAll, reviewQuest } from "@/app/actions/parent";
-import { PixelSprite } from "@/components/PixelSprite";
+import { Mascot } from "@/components/Mascot";
 import { Flash } from "./Flash";
 import type { ActionResult } from "@/lib/validate";
 
@@ -38,7 +38,7 @@ export function ApprovalQueue({ items }: { items: QueueItem[] }) {
   if (items.length === 0) {
     return (
       <div className="card flex flex-col items-center px-6 py-10 text-center">
-        <PixelSprite creature="sproutle" size={56} className="animate-bob" />
+        <Mascot creature="sproutle" size={56} className="animate-bob" />
         <p className="mt-3 font-semibold">All caught up</p>
         <p className="text-sm text-slate-500">New turn-ins from your kids will show up here.</p>
         <Flash result={result} />
@@ -48,7 +48,7 @@ export function ApprovalQueue({ items }: { items: QueueItem[] }) {
 
   return (
     <div className="card overflow-hidden">
-      <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+      <div className="flex items-center justify-between border-b border-indigo-50 px-4 py-3">
         <p className="text-sm font-semibold">
           Waiting for approval <span className="ml-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-800">{items.length}</span>
         </p>
@@ -58,14 +58,14 @@ export function ApprovalQueue({ items }: { items: QueueItem[] }) {
           </button>
         )}
       </div>
-      <ul className="divide-y divide-slate-100">
+      <ul className="divide-y divide-indigo-50">
         {items.map((item) => (
           <li key={item.id} className="px-4 py-3">
             <div className="flex items-center gap-3">
               <span className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl" style={{ background: `${item.color}1a` }}>
                 {item.icon}
-                <span className="absolute -bottom-1 -right-1 rounded-md bg-white p-0.5 shadow-sm ring-1 ring-slate-200">
-                  <PixelSprite creature={item.creature} size={16} />
+                <span className="absolute -bottom-1 -right-1 rounded-md bg-white p-0.5 shadow-sm ring-1 ring-indigo-100">
+                  <Mascot creature={item.creature} size={16} />
                 </span>
               </span>
               <div className="min-w-0 flex-1">

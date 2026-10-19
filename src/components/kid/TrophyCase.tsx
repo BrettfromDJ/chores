@@ -13,13 +13,13 @@ export function TrophyCase({ childId, kidName, rewards }: { childId: string; kid
     <>
       <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
         {rewards.map((r) => (
-          <li key={r.id}>
-            <button onClick={() => setReplay(r)} className="block w-full text-left transition-transform active:scale-95 sm:hover:-rotate-2" aria-label={`Replay ${r.title}`}>
+          <li key={r.id} className="relative">
+            <button onClick={() => setReplay(r)} className="block w-full transition-transform active:scale-95 lg:hover:-rotate-2" aria-label={`Replay ${r.title}`}>
               <CardArt imageUrl={r.imageUrl} title={r.title} holo />
             </button>
-            <p className="mt-2 truncate text-center text-sm font-extrabold">{r.title}</p>
-            <p className={`mt-0.5 text-center font-pixel text-[8px] uppercase ${r.status === "delivered" ? "text-leaf-dark" : "text-sun-dark"}`}>
-              {r.status === "delivered" ? "✓ In your binder" : "★ Ready to claim"}
+            {r.status !== "delivered" && <span className="badge-new">Claim!</span>}
+            <p className={`mt-2 text-center font-display text-sm ${r.status === "delivered" ? "text-mint" : "text-gold"}`}>
+              {r.status === "delivered" ? "✓ In your binder" : "Ask a parent!"}
             </p>
           </li>
         ))}
