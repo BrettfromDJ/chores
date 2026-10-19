@@ -6,8 +6,9 @@ import { GlowStage } from "@/components/game";
 import { Mascot } from "@/components/Mascot";
 import { LoginForm } from "./LoginForm";
 
-export default async function LoginPage() {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ confirmed?: string }> }) {
   if (await getFamilyId()) redirect("/");
+  const { confirmed } = await searchParams;
   const demo = dataMode === "demo";
   return (
     <main className="game-bg flex min-h-dvh flex-col items-center justify-center overflow-hidden px-5 py-10">
@@ -25,6 +26,7 @@ export default async function LoginPage() {
 
       <div className="panel mt-8 w-full max-w-sm p-5">
         <p className="text-game mb-4 text-xl">Parent sign in</p>
+        {confirmed && <p className="mb-4 rounded-xl bg-mint/20 px-3 py-2 text-sm font-bold text-mint">Your email is confirmed. Sign in below.</p>}
         <LoginForm demo={demo} demoEmail={demo ? DEMO_EMAIL : ""} demoPassword={demo ? DEMO_PASSWORD : ""} />
       </div>
 

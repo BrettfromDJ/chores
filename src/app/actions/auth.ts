@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { repo } from "@/lib/data";
 import { demoFindUser } from "@/lib/data/demo";
@@ -44,9 +45,15 @@ export async function signUp(_: ActionResult | null, form: FormData): Promise<Ac
     const familyName = str(form, "familyName", { max: 60 });
     if (password.length < 8) throw new Error("Use at least 8 characters for your password.");
     const db = await supabaseServer();
-    const { data, error } = await db.auth.signUp({ email, password, options: { data: { family_name: familyName } } });
+    const h = await headers();
+    const origin = `${h.get("x-forwarded-proto") ?? "https"}://${h.get("x-forwarded-host") ?? h.get("host")}`;
+    const { data, error } = await db.auth.signUp({
+      email,
+      password,
+      options: { data: { family_name: familyName }, emailRedirectTo: `${origin}/auth/callback` },
+    });
     if (error) throw new Error(error.message);
-    if (!data.session) return "Check your email to confirm your account, then sign in.";
+    if (!data.session) return "Check your email and tap the link to confirm your account.";
   });
   if (result.ok && !result.message) redirect("/parent/unlock");
   return result;
