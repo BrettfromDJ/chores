@@ -48,7 +48,7 @@ Set `AUTH_SECRET` (16+ random characters) in production. The app refuses to star
 ## Connecting Supabase
 
 1. Create a Supabase project and run `supabase/schema.sql` in the SQL editor.
-2. Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (see `.env.example`).
+2. Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (see `.env.example`). The legacy name `NEXT_PUBLIC_SUPABASE_ANON_KEY` also works.
 3. Restart. The app switches to Supabase automatically, and parents can create accounts from the sign-in screen. The first visit to the parent area asks them to set a PIN.
 
 Both backends implement the same `Repo` interface (`src/lib/data/repo.ts`).
