@@ -1,17 +1,18 @@
-import type { Child, ChildStats, Chore, Completion, Frequency, Reward, XpEvent } from "./types";
+import { money, xp } from "./money";
+import type { Child, ChildStats, Chore, Completion, Frequency, Transaction } from "./types";
 
 /* ---------- Levels ---------- */
 
-const TITLES = ["Rookie", "Explorer", "Pathfinder", "Ace Trainer", "Veteran", "Champion", "Legend", "Mythic"];
+const TITLES = ["Rookie", "Saver", "Hustler", "Go-Getter", "Money Pro", "Tycoon", "Mogul", "Legend"];
 
-/** Total lifetime XP needed to reach a level: L1=0, L2=50, L3=150, L4=300, L5=500… */
-export function xpForLevel(level: number) {
-  return 25 * level * (level - 1);
+/** Lifetime XP needed to reach a level: L2=500 ($5), L3=1,500 ($15), L4=3,000, L5=5,000… */
+export function centsForLevel(level: number) {
+  return 250 * level * (level - 1);
 }
 
-export function levelFromXp(xp: number) {
+export function levelFromCents(cents: number) {
   let level = 1;
-  while (xpForLevel(level + 1) <= xp) level++;
+  while (centsForLevel(level + 1) <= cents) level++;
   return level;
 }
 
@@ -19,18 +20,19 @@ export function levelTitle(level: number) {
   return TITLES[Math.min(TITLES.length - 1, Math.floor((level - 1) / 2))];
 }
 
-export function computeStats(childId: string, events: XpEvent[], completions: Completion[], timezone: string): ChildStats {
-  const mine = events.filter((e) => e.childId === childId);
-  const lifetimeXp = mine.filter((e) => e.reason === "chore").reduce((s, e) => s + e.amount, 0);
-  const balance = mine.reduce((s, e) => s + e.amount, 0);
-  const level = levelFromXp(lifetimeXp);
+/** Balance is the sum of the ledger; lifetime counts money earned from quests and bonuses. */
+export function computeStats(childId: string, transactions: Transaction[], completions: Completion[], timezone: string): ChildStats {
+  const mine = transactions.filter((t) => t.childId === childId);
+  const lifetimeCents = mine.filter((t) => t.kind === "earned" || t.kind === "bonus").reduce((s, t) => s + t.amountCents, 0);
+  const balanceCents = mine.reduce((s, t) => s + t.amountCents, 0);
+  const level = levelFromCents(lifetimeCents);
   return {
-    lifetimeXp,
-    balance,
+    lifetimeCents,
+    balanceCents,
     level,
     levelTitle: levelTitle(level),
-    levelFloor: xpForLevel(level),
-    levelCeil: xpForLevel(level + 1),
+    levelFloor: centsForLevel(level),
+    levelCeil: centsForLevel(level + 1),
     streak: computeStreak(completions.filter((c) => c.childId === childId && c.status === "approved"), timezone),
   };
 }
@@ -97,10 +99,6 @@ export function questBoard(child: Child, chores: Chore[], completions: Completio
   };
 }
 
-export function activeGoal(rewards: Reward[], childId: string) {
-  return rewards.filter((r) => r.childId === childId && r.status === "locked").sort((a, b) => a.sortOrder - b.sortOrder)[0] ?? null;
-}
-
 /* ---------- Badges ---------- */
 
 export interface Badge {
@@ -112,9 +110,9 @@ export interface Badge {
   progress: number; // 0..1
 }
 
-export function computeBadges(stats: ChildStats, approved: Completion[], rewards: Reward[]): Badge[] {
+export function computeBadges(stats: ChildStats, approved: Completion[], transactions: Transaction[]): Badge[] {
   const weekly = approved.filter((c) => c.periodKey.includes("W")).length;
-  const unlocked = rewards.filter((r) => r.status !== "locked").length;
+  const cashOuts = transactions.filter((t) => t.kind === "payout").length;
   const kinds = new Set(approved.map((c) => c.choreId)).size;
   const make = (id: string, name: string, description: string, icon: string, value: number, goal: number): Badge => ({
     id,
@@ -125,15 +123,15 @@ export function computeBadges(stats: ChildStats, approved: Completion[], rewards
     progress: Math.min(1, value / goal),
   });
   return [
-    make("first", "First Steps", "Finish your very first quest", "👟", approved.length, 1),
-    make("ten", "Quest Hunter", "Finish 10 quests", "🗡️", approved.length, 10),
+    make("first", "First Paycheck", "Get XP for your first quest", "💵", approved.length, 1),
+    make("ten", "Hard Worker", "Finish 10 quests", "🛠️", approved.length, 10),
     make("streak3", "On a Roll", "3-day quest streak", "🔥", stats.streak, 3),
     make("streak7", "Unstoppable", "7-day quest streak", "⚡", stats.streak, 7),
-    make("xp100", "Century", "Earn 100 lifetime XP", "💯", stats.lifetimeXp, 100),
-    make("xp500", "Power Surge", "Earn 500 lifetime XP", "🌟", stats.lifetimeXp, 500),
+    make("earn10", "Ten Spot", `Earn ${xp(1000)} (${money(1000, { compact: true })})`, "💰", stats.lifetimeCents, 1000),
+    make("earn50", "Big Earner", `Earn ${xp(5000)} (${money(5000, { compact: true })})`, "🤑", stats.lifetimeCents, 5000),
+    make("saver", "Super Saver", `Save up ${xp(2000)} (${money(2000, { compact: true })})`, "🐷", stats.balanceCents, 2000),
+    make("payday", "Payday", "Cash out with a parent", "🏦", cashOuts, 1),
     make("weekly5", "Weekly Warrior", "Finish 5 weekly quests", "🛡️", weekly, 5),
     make("variety", "Jack of All Trades", "Complete 5 different quests", "🎒", kinds, 5),
-    make("reward1", "Collector", "Unlock your first reward", "🎁", unlocked, 1),
-    make("reward3", "Grand Collector", "Unlock 3 rewards", "👑", unlocked, 3),
   ];
 }

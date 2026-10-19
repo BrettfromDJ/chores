@@ -1,6 +1,6 @@
 # PokéQuest
 
-A mobile-first chore reward app. Kids complete real-life chores ("quests") to earn XP, level up, and unlock physical trading-card rewards picked by their parents.
+A mobile-first chore app where XP is real money. Kids complete real-life chores ("quests") to earn XP (**100 XP = $1**). XP goes into their wallet, and parents cash it out as real money.
 
 Built with **Next.js 15 (App Router)**, **Tailwind CSS**, and **Supabase** (optional — runs on built-in demo data out of the box).
 
@@ -20,28 +20,28 @@ Open http://localhost:3000 and sign in with the pre-filled demo account:
 | Password | `trainer123` |
 | Parent PIN | `1234` |
 
-Mia's first reward is already unlocked, so opening her dashboard plays the reward-reveal animation. Demo data lives in `.data/pokequest.json`; delete that file (or use **Parent → Settings → Reset demo**) to start over.
+Demo data lives in `.data/pokequest.json`; delete that file (or use **Parent → Settings → Reset demo**) to start over.
 
 ## What's inside
 
-**Kid experience** (`/kid/[id]`): game-style dashboard with a partner creature, level meter, XP balance, streak, daily and weekly quests, reward goal progress, a trophy case, badges, an adventure log, and an animated "Quest Egg" reward reveal.
+**Kid experience** (`/kid/[id]`): game-style dashboard with a partner creature, level meter, streak, and daily and weekly quests that each show their pay (e.g. +50 XP · $0.50). The **Wallet** tab shows the XP balance, its dollar value, and full history. The **Journal** tab has badges and an adventure log.
 
-**Parent dashboard** (`/parent`): PIN-locked, minimal admin with an approval queue (approve, send back with a note, approve all), quests, rewards with images and goal order, kid profiles, full history, and settings.
+**Parent dashboard** (`/parent`): PIN-locked, minimal admin with an approval queue (approve, send back with a note, approve all), a **Money** page (cash out, add bonuses, all wallet activity), quests with XP pay, kid profiles, history, and settings.
 
-### How XP works
+### How the money works
 
-1. A kid taps **Done!** → a *pending* completion is stored. No XP is granted.
-2. A parent approves on the server → an XP ledger entry is written.
-3. In the same server step, the kid's next reward goal unlocks automatically once their balance covers it, and its XP cost is deducted.
-4. The kid sees the reveal animation the next time they open their dashboard. The parent marks the physical card **handed over**.
+1. A kid taps **Done!** → a *pending* completion is stored. Nothing is paid.
+2. A parent approves on the server → the quest's XP is written to the kid's wallet ledger.
+3. **100 XP = $1.** Every amount is stored as integer XP (1 XP = 1 cent), so there are no rounding issues.
+4. When a parent hands over real money, they record a **Cash out**, which can never exceed the balance. **Bonuses** (birthday money, etc.) add to the wallet.
 
-Level is based on lifetime XP, and rewards are paid from the spendable balance.
+Levels and money badges are based on lifetime XP earned. The wallet balance is the sum of the ledger.
 
 ## Security model
 
 - **Family session:** a parent signs in once per device (demo: HMAC-signed httpOnly cookie, Supabase: Supabase Auth).
 - **Parent PIN:** admin pages and every XP-changing server action require a short-lived (20 min), signed `pq_parent` cookie that you get by entering the PIN. PINs and passwords are hashed with scrypt, and PIN attempts are throttled.
-- **Server-side awards only:** XP values are read from the server-side chore, never from the client. In Supabase mode, Row Level Security scopes every table to the parent's family. `xp_events` has no client write policy, and status changes go through `SECURITY DEFINER` functions (`review_completion`, `settle_rewards`).
+- **Server-side money only:** quest pay is read from the server-side chore, never from the client. In Supabase mode, Row Level Security scopes every table to the parent's family. The `transactions` ledger has no client write policy. Approvals, cash-outs and bonuses go through `SECURITY DEFINER` functions (`review_completion`, `add_transaction`) that lock the child row and check the balance.
 
 Set `AUTH_SECRET` (16+ random characters) in production. The app refuses to start sessions without it.
 
@@ -57,11 +57,12 @@ Both backends implement the same `Repo` interface (`src/lib/data/repo.ts`).
 
 ```
 src/app/                 routes (kid, parent, login) + server actions
-src/components/          Mascot (original SVG creatures), CardArt, game UI kit, kid/parent components
+src/components/          Mascot (original SVG creatures), game UI kit, kid/parent components
 src/lib/game.ts          levels, periods (daily/weekly reset in APP_TIMEZONE), streaks, badges
+src/lib/money.ts         XP ↔ dollars (100 XP = $1), formatting; currency via NEXT_PUBLIC_CURRENCY
 src/lib/data/            demo (JSON file) and Supabase repositories
 src/lib/auth/            sessions, parent PIN unlock, password hashing
-supabase/schema.sql      tables, RLS policies, XP functions
+supabase/schema.sql      tables, RLS policies, wallet functions
 ```
 
-All creatures, card art and UI are original. No official Pokémon artwork or logos are used.
+All creatures and UI are original. No official Pokémon artwork or logos are used.

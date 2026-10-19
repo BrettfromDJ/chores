@@ -23,7 +23,7 @@ export default async function UnlockPage({ searchParams }: { searchParams: Promi
         </div>
         <h1 className="text-game mt-4 text-center text-3xl">{hasPin ? "Parents only!" : "Create a parent PIN"}</h1>
         <p className="mt-1 text-center font-bold text-white/70">
-          {hasPin ? "Enter your PIN to approve quests and manage rewards." : "Kids won't be able to approve their own quests without it."}
+          {hasPin ? "Enter your PIN to approve quests and manage money." : "Kids won't be able to approve their own quests without it."}
         </p>
         <PinPad setup={!hasPin} next={next ?? "/parent"} />
       </div>

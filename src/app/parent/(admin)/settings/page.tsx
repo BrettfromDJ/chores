@@ -28,7 +28,7 @@ export default async function SettingsAdmin() {
         </dl>
         {dataMode === "demo" && (
           <div className="mt-4 flex items-center justify-between gap-3 rounded-xl bg-indigo-50/50 p-3">
-            <p className="text-sm text-slate-600">Restore the original demo kids, quests and rewards.</p>
+            <p className="text-sm text-slate-600">Restore the original demo kids, quests and wallets.</p>
             <ResetDemoButton />
           </div>
         )}

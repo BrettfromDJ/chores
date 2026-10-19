@@ -1,4 +1,5 @@
 import { CREATURE_IDS } from "./creatures";
+import { money, parseCents } from "./money";
 import type { CreatureId, Frequency } from "./types";
 
 export class ValidationError extends Error {}
@@ -14,6 +15,13 @@ export function int(form: FormData, key: string, min: number, max: number) {
   const n = Number(form.get(key));
   if (!Number.isInteger(n) || n < min || n > max) throw new ValidationError(`${key} must be a whole number between ${min} and ${max}.`);
   return n;
+}
+
+/** Parse a money field ("1.50") into cents within [min, max] cents. */
+export function cents(form: FormData, key: string, min: number, max: number) {
+  const value = parseCents(String(form.get(key) ?? ""));
+  if (!Number.isInteger(value) || value < min || value > max) throw new ValidationError(`${key} must be between ${money(min)} and ${money(max)}.`);
+  return value;
 }
 
 export function frequency(form: FormData): Frequency {
@@ -32,22 +40,6 @@ export function color(form: FormData) {
   const v = String(form.get("color") ?? "");
   if (!/^#[0-9a-f]{6}$/i.test(v)) throw new ValidationError("Pick a color.");
   return v;
-}
-
-export function imageUrl(form: FormData) {
-  const v = str(form, "imageUrl", { max: 2000, required: false });
-  if (!v) return "art:embercub";
-  if (v.startsWith("art:")) {
-    if (!(CREATURE_IDS as string[]).includes(v.slice(4))) throw new ValidationError("Unknown card art.");
-    return v;
-  }
-  try {
-    const url = new URL(v);
-    if (url.protocol !== "https:" && url.protocol !== "http:") throw new Error();
-    return url.toString();
-  } catch {
-    throw new ValidationError("Image must be an http(s) link.");
-  }
 }
 
 export function pin(form: FormData, key = "pin") {

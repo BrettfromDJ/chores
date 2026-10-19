@@ -21,7 +21,7 @@ export default async function LoginPage() {
       <h1 className="text-game mt-2 text-6xl leading-none">
         Poké<span className="text-gold">Quest</span>
       </h1>
-      <p className="mt-2 font-display text-xl text-cyan-glow drop-shadow-[0_2px_0_#14124a]">Real chores. Real XP. Real cards.</p>
+      <p className="mt-2 font-display text-xl text-cyan-glow drop-shadow-[0_2px_0_#14124a]">Real chores. Real XP. Real money.</p>
 
       <div className="panel mt-8 w-full max-w-sm p-5">
         <p className="text-game mb-4 text-xl">Parent sign in</p>

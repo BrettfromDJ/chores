@@ -10,9 +10,9 @@ import { guard, type ActionResult } from "@/lib/validate";
 const TZ = process.env.APP_TIMEZONE || "America/New_York";
 
 /**
- * A child turns in a quest. This only records a *pending* completion: XP is
- * never granted here, only when a parent approves on the server.
- * The XP value is read from the server-side chore, never from the client.
+ * A child turns in a quest. This only records a *pending* completion: money is
+ * never paid here, only when a parent approves on the server.
+ * The pay is read from the server-side chore, never from the client.
  */
 export async function turnInQuest(childId: string, choreId: string): Promise<ActionResult> {
   const familyId = await requireFamily();
@@ -30,7 +30,7 @@ export async function turnInQuest(childId: string, choreId: string): Promise<Act
         periodKey: periodKey(chore.frequency, now, family?.timezone || TZ),
         choreTitle: chore.title,
         choreIcon: chore.icon,
-        xp: chore.xp,
+        amountCents: chore.amountCents,
         submittedAt: now.toISOString(),
       });
     } catch (e) {
@@ -42,12 +42,4 @@ export async function turnInQuest(childId: string, choreId: string): Promise<Act
   revalidatePath(`/kid/${childId}`, "layout");
   revalidatePath("/parent", "layout");
   return result;
-}
-
-export async function markRevealed(childId: string, rewardId: string) {
-  const familyId = await requireFamily();
-  const rewards = await repo.listRewards(familyId);
-  if (!rewards.some((r) => r.id === rewardId && r.childId === childId)) return;
-  await repo.markRewardRevealed(familyId, rewardId);
-  revalidatePath(`/kid/${childId}`, "layout");
 }

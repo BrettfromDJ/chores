@@ -1,18 +1,15 @@
-import type { Child, Chore, Completion, Family, Reward, XpEvent } from "../types";
+import type { Child, Chore, Completion, Family, Transaction } from "../types";
 
 export type NewCompletion = Omit<Completion, "id" | "status" | "reviewedAt" | "note">;
 export type ChildInput = Pick<Child, "name" | "creature" | "color"> & { id?: string };
-export type ChoreInput = Pick<Chore, "title" | "description" | "icon" | "xp" | "frequency" | "childIds" | "active"> & { id?: string };
-export type RewardInput = Pick<Reward, "childId" | "title" | "description" | "imageUrl" | "xpCost" | "sortOrder"> & { id?: string };
-
-export interface ReviewResult {
-  completion: Completion;
-  unlocked: Reward[];
-}
+export type ChoreInput = Pick<Chore, "title" | "description" | "icon" | "amountCents" | "frequency" | "childIds" | "active"> & { id?: string };
+export type ManualTransaction = { childId: string; kind: "bonus" | "payout"; amountCents: number; note: string | null };
 
 /**
  * Storage boundary. Every method is scoped to a family id that the caller has
  * already authenticated. Implementations: demo (JSON file) and Supabase (RLS + RPC).
+ * Wallet math (ledger writes, balance checks) happens inside the repo so each
+ * change is atomic.
  */
 export interface Repo {
   getFamily(familyId: string): Promise<Family | null>;
@@ -30,18 +27,12 @@ export interface Repo {
   listCompletions(familyId: string): Promise<Completion[]>;
   /** Must reject duplicates for the same chore/child/period that are not rejected. */
   submitCompletion(familyId: string, input: NewCompletion): Promise<Completion>;
-  /** Atomically review, award XP and unlock any rewards the new balance covers. */
-  reviewCompletion(familyId: string, completionId: string, approve: boolean, note: string | null): Promise<ReviewResult>;
+  /** Atomically review and, when approved, pay the kid's wallet. */
+  reviewCompletion(familyId: string, completionId: string, approve: boolean, note: string | null): Promise<Completion>;
 
-  listRewards(familyId: string): Promise<Reward[]>;
-  saveReward(familyId: string, input: RewardInput): Promise<Reward>;
-  deleteReward(familyId: string, rewardId: string): Promise<void>;
-  /** Unlock rewards in goal order while the child's balance covers them. */
-  settleRewards(familyId: string, childId: string): Promise<Reward[]>;
-  markRewardRevealed(familyId: string, rewardId: string): Promise<void>;
-  markRewardDelivered(familyId: string, rewardId: string, delivered: boolean): Promise<void>;
-
-  listXpEvents(familyId: string): Promise<XpEvent[]>;
+  listTransactions(familyId: string): Promise<Transaction[]>;
+  /** Bonus (money in) or payout (cash handed over). Payouts can't overdraw. */
+  addTransaction(familyId: string, input: ManualTransaction): Promise<Transaction>;
 }
 
 export class DuplicateSubmissionError extends Error {

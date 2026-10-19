@@ -2,11 +2,14 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { hashSecret } from "../auth/password";
 import { periodKey } from "../game";
-import type { Child, Chore, Completion, Family, Reward, XpEvent } from "../types";
+import type { Child, Chore, Completion, Family, Transaction } from "../types";
 
 export const DEMO_EMAIL = "parent@pokequest.demo";
 export const DEMO_PASSWORD = "trainer123";
 export const DEMO_PIN = "1234";
+
+/** Bump when the stored shape changes; older demo files are reseeded. */
+export const DEMO_DB_VERSION = 4;
 
 export interface DemoUser {
   email: string;
@@ -15,14 +18,13 @@ export interface DemoUser {
 }
 
 export interface DemoDb {
-  version: 1;
+  version: typeof DEMO_DB_VERSION;
   users: DemoUser[];
   families: (Family & { pinHash: string | null })[];
   children: Child[];
   chores: Chore[];
   completions: Completion[];
-  rewards: Reward[];
-  xpEvents: XpEvent[];
+  transactions: Transaction[];
 }
 
 export function buildSeed(timezone: string, now = new Date()): DemoDb {
@@ -39,13 +41,13 @@ export function buildSeed(timezone: string, now = new Date()): DemoDb {
   const leo: Child = { id: "kid_leo", familyId, name: "Leo", creature: "splashkit", color: "#3d6cf0", createdAt: iso(daysAgo(30)) };
   const both = [mia.id, leo.id];
 
-  const chore = (id: string, title: string, icon: string, xp: number, frequency: Chore["frequency"], childIds: string[], description = ""): Chore => ({
+  const chore = (id: string, title: string, icon: string, amountCents: number, frequency: Chore["frequency"], childIds: string[], description = ""): Chore => ({
     id,
     familyId,
     title,
     description,
     icon,
-    xp,
+    amountCents,
     frequency,
     childIds,
     active: true,
@@ -53,22 +55,23 @@ export function buildSeed(timezone: string, now = new Date()): DemoDb {
   });
 
   const chores: Chore[] = [
-    chore("ch_bed", "Make your bed", "🛏️", 10, "daily", both, "Pillows fluffed, blanket flat."),
-    chore("ch_teeth", "Brush teeth (AM + PM)", "🪥", 5, "daily", both, "Two minutes, twice a day."),
-    chore("ch_pet", "Feed Biscuit", "🐶", 15, "daily", [mia.id], "Food bowl + fresh water."),
-    chore("ch_toys", "Tidy up toys", "🧸", 10, "daily", [leo.id], "Everything back in its bin."),
-    chore("ch_read", "Read for 20 minutes", "📚", 20, "daily", both),
-    chore("ch_dishes", "Help with dishes", "🍽️", 15, "daily", [mia.id], "Clear the table and load the dishwasher."),
-    chore("ch_laundry", "Put away laundry", "👕", 40, "weekly", both, "Fold and put away your clean clothes."),
-    chore("ch_room", "Deep-clean bedroom", "🧹", 60, "weekly", both, "Floor clear, dust shelves, empty the bin."),
-    chore("ch_plants", "Water the plants", "🪴", 30, "weekly", [leo.id]),
-    chore("ch_trash", "Take out recycling", "♻️", 35, "weekly", [mia.id]),
+    chore("ch_bed", "Make your bed", "🛏️", 50, "daily", both, "Pillows fluffed, blanket flat."),
+    chore("ch_teeth", "Brush teeth (AM + PM)", "🪥", 25, "daily", both, "Two minutes, twice a day."),
+    chore("ch_pet", "Feed Biscuit", "🐶", 75, "daily", [mia.id], "Food bowl + fresh water."),
+    chore("ch_toys", "Tidy up toys", "🧸", 50, "daily", [leo.id], "Everything back in its bin."),
+    chore("ch_read", "Read for 20 minutes", "📚", 100, "daily", both),
+    chore("ch_dishes", "Help with dishes", "🍽️", 75, "daily", [mia.id], "Clear the table and load the dishwasher."),
+    chore("ch_laundry", "Put away laundry", "👕", 200, "weekly", both, "Fold and put away your clean clothes."),
+    chore("ch_room", "Deep-clean bedroom", "🧹", 300, "weekly", both, "Floor clear, dust shelves, empty the bin."),
+    chore("ch_plants", "Water the plants", "🪴", 150, "weekly", [leo.id]),
+    chore("ch_trash", "Take out recycling", "♻️", 150, "weekly", [mia.id]),
   ];
 
   const completions: Completion[] = [];
-  const xpEvents: XpEvent[] = [];
+  const transactions: Transaction[] = [];
   const add = (child: Child, c: Chore, when: Date, status: Completion["status"]) => {
     const id = randomUUID();
+    const reviewedAt = status === "pending" ? null : iso(new Date(when.getTime() + 3600_000));
     completions.push({
       id,
       familyId,
@@ -78,13 +81,13 @@ export function buildSeed(timezone: string, now = new Date()): DemoDb {
       status,
       choreTitle: c.title,
       choreIcon: c.icon,
-      xp: c.xp,
+      amountCents: c.amountCents,
       submittedAt: iso(when),
-      reviewedAt: status === "pending" ? null : iso(new Date(when.getTime() + 3600_000)),
+      reviewedAt,
       note: status === "rejected" ? "Almost! Let's try again tomorrow." : null,
     });
     if (status === "approved") {
-      xpEvents.push({ id: randomUUID(), familyId, childId: child.id, amount: c.xp, reason: "chore", refId: id, createdAt: iso(new Date(when.getTime() + 3600_000)) });
+      transactions.push({ id: randomUUID(), familyId, childId: child.id, amountCents: c.amountCents, kind: "earned", refId: id, note: null, createdAt: reviewedAt! });
     }
   };
   const byId = (id: string) => chores.find((c) => c.id === id)!;
@@ -99,9 +102,12 @@ export function buildSeed(timezone: string, now = new Date()): DemoDb {
   add(mia, byId("ch_dishes"), daysAgo(4, 19), "rejected");
   add(mia, byId("ch_laundry"), daysAgo(8), "approved");
   add(mia, byId("ch_room"), daysAgo(9), "approved");
-  // Today, waiting on a parent.
   add(mia, byId("ch_bed"), daysAgo(0, 8), "pending");
   add(mia, byId("ch_pet"), daysAgo(0, 9), "pending");
+  transactions.push(
+    { id: randomUUID(), familyId, childId: mia.id, amountCents: 500, kind: "bonus", refId: null, note: "Birthday money from Grandma 🎂", createdAt: iso(daysAgo(7, 12)) },
+    { id: randomUUID(), familyId, childId: mia.id, amountCents: -300, kind: "payout", refId: null, note: "Ice cream at the park", createdAt: iso(daysAgo(3, 15)) },
+  );
 
   // Leo: getting started.
   for (const d of [5, 3, 2, 1]) {
@@ -111,47 +117,13 @@ export function buildSeed(timezone: string, now = new Date()): DemoDb {
   add(leo, byId("ch_plants"), daysAgo(9), "approved");
   add(leo, byId("ch_read"), daysAgo(0, 16), "pending");
 
-  const reward = (id: string, child: Child, title: string, description: string, imageUrl: string, xpCost: number, sortOrder: number): Reward => ({
-    id,
-    familyId,
-    childId: child.id,
-    title,
-    description,
-    imageUrl,
-    xpCost,
-    sortOrder,
-    status: "locked",
-    unlockedAt: null,
-    revealedAt: null,
-    deliveredAt: null,
-    createdAt: iso(daysAgo(20)),
-  });
-
-  const rewards: Reward[] = [
-    reward("rw_mia_1", mia, "Booster Pack", "One shiny 10-card booster pack.", "art:embercub", 150, 1),
-    reward("rw_mia_2", mia, "Holo Dragon Card", "The sparkly dragon card from the hobby shop.", "art:zapwing", 300, 2),
-    reward("rw_mia_3", mia, "Collector Tin", "A tin with 4 packs and a promo card.", "art:wispurr", 600, 3),
-    reward("rw_leo_1", leo, "Starter Deck", "A ready-to-play water deck.", "art:splashkit", 200, 1),
-    reward("rw_leo_2", leo, "Sleeves + Binder", "Keep your collection safe.", "art:pebblit", 350, 2),
-  ];
-
-  // Mia's balance already covers the first goal: unlock it (unrevealed) so the
-  // reveal animation plays the first time her dashboard is opened.
-  const miaEarned = xpEvents.filter((e) => e.childId === mia.id).reduce((s, e) => s + e.amount, 0);
-  if (miaEarned >= rewards[0].xpCost) {
-    rewards[0].status = "unlocked";
-    rewards[0].unlockedAt = iso(daysAgo(1, 20));
-    xpEvents.push({ id: randomUUID(), familyId, childId: mia.id, amount: -rewards[0].xpCost, reason: "reward", refId: rewards[0].id, createdAt: rewards[0].unlockedAt });
-  }
-
   return {
-    version: 1,
+    version: DEMO_DB_VERSION,
     users: [{ email: DEMO_EMAIL, passwordHash: hashSecret(DEMO_PASSWORD), familyId }],
     families: [{ id: familyId, name: "The Rivera Family", timezone, pinHash: hashSecret(DEMO_PIN) }],
     children: [mia, leo],
     chores,
     completions,
-    rewards,
-    xpEvents,
+    transactions,
   };
 }

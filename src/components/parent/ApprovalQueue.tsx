@@ -5,6 +5,7 @@ import { approveAll, reviewQuest } from "@/app/actions/parent";
 import { Mascot } from "@/components/Mascot";
 import { Flash } from "./Flash";
 import type { ActionResult } from "@/lib/validate";
+import { money } from "@/lib/money";
 
 export interface QueueItem {
   id: string;
@@ -13,7 +14,7 @@ export interface QueueItem {
   color: string;
   icon: string;
   title: string;
-  xp: number;
+  amountCents: number;
   submittedAt: string;
   frequency: "daily" | "weekly";
 }
@@ -74,7 +75,10 @@ export function ApprovalQueue({ items }: { items: QueueItem[] }) {
                   {item.childName} · {item.frequency} · {timeAgo(item.submittedAt)}
                 </p>
               </div>
-              <span className="hidden text-sm font-semibold text-emerald-600 sm:block">+{item.xp} XP</span>
+              <span className="hidden text-right text-sm font-semibold leading-tight text-emerald-600 sm:block">
+                +{item.amountCents} XP
+                <span className="block text-xs font-medium text-slate-500">{money(item.amountCents)}</span>
+              </span>
               <div className="flex shrink-0 gap-1.5">
                 <button
                   className="btn-ghost !px-2.5"
@@ -85,7 +89,7 @@ export function ApprovalQueue({ items }: { items: QueueItem[] }) {
                   ✕
                 </button>
                 <button className="btn bg-emerald-600 text-white hover:bg-emerald-700" disabled={busy !== null} onClick={() => run(item.id, () => reviewQuest(item.id, true))}>
-                  {busy === item.id ? "…" : <>✓ <span className="sm:hidden">+{item.xp}</span><span className="hidden sm:inline">Approve</span></>}
+                  {busy === item.id ? "…" : <>✓ <span className="sm:hidden">{money(item.amountCents)}</span><span className="hidden sm:inline">Approve</span></>}
                 </button>
               </div>
             </div>

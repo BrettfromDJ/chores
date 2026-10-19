@@ -70,7 +70,7 @@ export default async function HistoryAdmin({ searchParams }: { searchParams: Pro
                     </p>
                   </div>
                   <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium capitalize ${STATUS[c.status]}`}>{c.status}</span>
-                  <span className={`w-14 shrink-0 text-right text-sm font-semibold ${c.status === "approved" ? "text-emerald-600" : "text-slate-300"}`}>+{c.xp}</span>
+                  <span className={`w-20 shrink-0 text-right text-sm font-semibold ${c.status === "approved" ? "text-emerald-600" : "text-slate-300"}`}>+{c.amountCents} XP</span>
                 </li>
               );
             })}

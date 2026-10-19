@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { requireParent } from "@/lib/auth/session";
 import { loadFamily } from "@/lib/queries";
-import { activeGoal, localDate } from "@/lib/game";
+import { localDate } from "@/lib/game";
 import { Mascot } from "@/components/Mascot";
 import { ApprovalQueue, type QueueItem } from "@/components/parent/ApprovalQueue";
+import { money, xp } from "@/lib/money";
 
 export default async function ParentHome() {
   const familyId = await requireParent();
-  const { children, chores, completions, rewards, stats, timezone } = await loadFamily(familyId);
+  const { children, chores, completions, transactions, stats, timezone } = await loadFamily(familyId);
   const byId = new Map(children.map((c) => [c.id, c]));
   const choreById = new Map(chores.map((c) => [c.id, c]));
   const today = localDate(new Date(), timezone);
@@ -24,41 +25,25 @@ export default async function ParentHome() {
         color: kid.color,
         icon: c.choreIcon,
         title: c.choreTitle,
-        xp: c.xp,
+        amountCents: c.amountCents,
         submittedAt: c.submittedAt,
         frequency: c.periodKey.includes("W") ? "weekly" : "daily",
       };
     });
-
-  const toDeliver = rewards.filter((r) => r.status === "unlocked");
 
   return (
     <div className="space-y-8">
       <section>
         <h1 className="mb-3 text-lg font-semibold tracking-tight">Approvals</h1>
         <ApprovalQueue items={queue} />
-        <p className="mt-2 text-xs text-slate-500">XP is only awarded when you approve. Rewards unlock automatically once a goal is reached.</p>
+        <p className="mt-2 text-xs text-slate-500">XP is only paid when you approve. 100 XP = $1, and it goes straight into your kid&apos;s wallet.</p>
       </section>
-
-      {toDeliver.length > 0 && (
-        <section className="card flex items-center gap-3 border-amber-200 bg-amber-50 p-4">
-          <span className="text-2xl">🎁</span>
-          <div className="flex-1 text-sm">
-            <p className="font-semibold text-amber-900">{toDeliver.length} reward{toDeliver.length > 1 ? "s" : ""} to hand over</p>
-            <p className="text-amber-800/80">{toDeliver.map((r) => `${r.title} (${byId.get(r.childId)?.name ?? "?"})`).join(", ")}</p>
-          </div>
-          <Link href="/parent/rewards" className="btn-ghost shrink-0">
-            View
-          </Link>
-        </section>
-      )}
 
       <section>
         <h2 className="mb-3 text-lg font-semibold tracking-tight">Kids</h2>
         <ul className="grid gap-3 sm:grid-cols-2">
           {children.map((kid) => {
             const s = stats[kid.id];
-            const goal = activeGoal(rewards, kid.id);
             const assigned = chores.filter((c) => c.active && c.frequency === "daily" && c.childIds.includes(kid.id)).length;
             const doneToday = completions.filter(
               (c) => c.childId === kid.id && c.periodKey === today && c.status !== "rejected" && choreById.get(c.choreId)?.frequency === "daily",
@@ -72,32 +57,18 @@ export default async function ParentHome() {
                   <div className="flex-1">
                     <p className="font-semibold">{kid.name}</p>
                     <p className="text-xs text-slate-500">
-                      Level {s.level} · {s.lifetimeXp} XP lifetime · 🔥 {s.streak}-day streak
+                      Level {s.level} · {money(s.lifetimeCents)} earned all-time · 🔥 {s.streak}-day streak
                     </p>
                   </div>
                 </div>
                 <dl className="mt-4 grid grid-cols-3 gap-2 text-center">
-                  <Metric label="Balance" value={`${s.balance} XP`} />
+                  <Metric label={xp(s.balanceCents)} value={money(s.balanceCents)} />
                   <Metric label="Today" value={`${doneToday}/${assigned}`} />
-                  <Metric label="Unlocked" value={rewards.filter((r) => r.childId === kid.id && r.status !== "locked").length} />
+                  <Metric label="Cashed out" value={money(transactions.filter((t) => t.childId === kid.id && t.kind === "payout").reduce((sum, t) => sum - t.amountCents, 0))} />
                 </dl>
-                {goal ? (
-                  <div className="mt-4">
-                    <div className="flex justify-between text-xs">
-                      <span className="font-medium text-slate-700">🎯 {goal.title}</span>
-                      <span className="text-slate-500">
-                        {Math.min(s.balance, goal.xpCost)}/{goal.xpCost}
-                      </span>
-                    </div>
-                    <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-indigo-50">
-                      <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, (s.balance / goal.xpCost) * 100)}%`, background: kid.color }} />
-                    </div>
-                  </div>
-                ) : (
-                  <Link href="/parent/rewards" className="mt-4 block text-xs font-medium text-slate-500 underline">
-                    No active goal — add a reward
-                  </Link>
-                )}
+                <Link href="/parent/money" className="mt-4 flex items-center justify-between rounded-xl bg-indigo-50/60 px-3 py-2 text-sm font-medium text-royal hover:bg-indigo-50">
+                  Cash out or add a bonus <span aria-hidden>→</span>
+                </Link>
               </li>
             );
           })}

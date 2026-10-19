@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 const LINKS = [
   { href: "/parent", label: "Approvals" },
   { href: "/parent/quests", label: "Quests" },
-  { href: "/parent/rewards", label: "Rewards" },
+  { href: "/parent/money", label: "Money" },
   { href: "/parent/trainers", label: "Kids" },
   { href: "/parent/history", label: "History" },
   { href: "/parent/settings", label: "Settings" },

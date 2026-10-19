@@ -1,12 +1,12 @@
 "use client";
 
 import { createContext, useActionState, useContext, useEffect, useState, useTransition } from "react";
-import { deleteChild, deleteChore, deleteReward, saveChild, saveChore, saveReward, setDelivered } from "@/app/actions/parent";
+import { deleteChild, deleteChore, moveMoney, saveChild, saveChore } from "@/app/actions/parent";
 import { CREATURES } from "@/lib/creatures";
 import { Mascot } from "@/components/Mascot";
-import { CardArt } from "@/components/CardArt";
 import { Flash } from "./Flash";
-import type { Child, Chore, Reward } from "@/lib/types";
+import type { Child, Chore } from "@/lib/types";
+import { money, parseCents } from "@/lib/money";
 import type { ActionResult } from "@/lib/validate";
 
 const ICONS = ["🛏️", "🪥", "🧸", "📚", "🍽️", "👕", "🧹", "🪴", "♻️", "🐶", "🐱", "🧺", "🚿", "🎒", "🥗", "🎹", "🧽", "🗑️", "🚲", "⭐"];
@@ -31,19 +31,33 @@ function useCloseOnSuccess(state: ActionResult | null) {
 export function ChoreForm({ chore, kids }: { chore?: Chore; kids: Child[] }) {
   const [state, action, pending] = useActionState(saveChore, null);
   const [icon, setIcon] = useState(chore?.icon ?? "⭐");
+  const [pay, setPay] = useState(chore?.amountCents ?? 50);
   useCloseOnSuccess(state);
   return (
     <form action={action} className="space-y-4">
       {chore && <input type="hidden" name="id" value={chore.id} />}
       <input type="hidden" name="icon" value={icon} />
-      <div className="grid gap-4 sm:grid-cols-[1fr_120px]">
+      <div className="grid gap-4 sm:grid-cols-[1fr_150px]">
         <label className="block">
           <Label>Quest name</Label>
           <input name="title" required maxLength={80} defaultValue={chore?.title} placeholder="Make your bed" className="field" />
         </label>
         <label className="block">
-          <Label>XP reward</Label>
-          <input name="xp" type="number" inputMode="numeric" min={1} max={1000} required defaultValue={chore?.xp ?? 10} className="field" />
+          <Label>Pays (XP)</Label>
+          <div className="relative">
+            <input
+              name="xp"
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={100000}
+              required
+              value={Number.isFinite(pay) ? pay : ""}
+              onChange={(e) => setPay(Number(e.target.value))}
+              className="field pr-16"
+            />
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm font-medium text-emerald-600">{money(pay > 0 ? pay : 0)}</span>
+          </div>
         </label>
       </div>
       <div>
@@ -108,119 +122,61 @@ export function ChoreForm({ chore, kids }: { chore?: Chore; kids: Child[] }) {
   );
 }
 
-/* ---------- Rewards ---------- */
+/* ---------- Money ---------- */
 
-export function RewardForm({ reward, kids, defaultChildId, nextOrder }: { reward?: Reward; kids: Child[]; defaultChildId?: string; nextOrder?: number }) {
-  const [state, action, pending] = useActionState(saveReward, null);
-  const [image, setImage] = useState(reward?.imageUrl ?? "art:embercub");
-  const [title, setTitle] = useState(reward?.title ?? "");
-  const [cost, setCost] = useState(reward?.xpCost ?? 200);
-  const locked = !reward || reward.status === "locked";
-  const custom = !image.startsWith("art:");
-  useCloseOnSuccess(state);
-
+/** Pay out cash or add a bonus for one kid. */
+export function MoneyForm({ kid, balanceCents }: { kid: Child; balanceCents: number }) {
+  const [state, action, pending] = useActionState(moveMoney, null);
+  const [kind, setKind] = useState<"payout" | "bonus">("payout");
+  const [amount, setAmount] = useState("");
+  const cents = parseCents(amount);
+  useEffect(() => {
+    if (state?.ok) setAmount("");
+  }, [state]);
   return (
-    <form action={action} className="grid gap-5 sm:grid-cols-[140px_1fr]">
-      {reward && <input type="hidden" name="id" value={reward.id} />}
-      <input type="hidden" name="imageUrl" value={image} />
-      <div className="mx-auto w-32 sm:w-full">
-        <CardArt imageUrl={image || "art:embercub"} title={title || "Reward"} xpCost={cost} holo />
-      </div>
-      <div className="space-y-4">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block">
-            <Label>Reward</Label>
-            <input name="title" required maxLength={80} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Booster pack" className="field" />
-          </label>
-          <label className="block">
-            <Label>For</Label>
-            <select name="childId" defaultValue={reward?.childId ?? defaultChildId ?? kids[0]?.id} disabled={!locked} className="field">
-              {kids.map((k) => (
-                <option key={k.id} value={k.id}>
-                  {k.name}
-                </option>
-              ))}
-            </select>
-            {!locked && <input type="hidden" name="childId" value={reward!.childId} />}
-          </label>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <label className="block">
-            <Label>XP cost</Label>
-            <input
-              name="xpCost"
-              type="number"
-              inputMode="numeric"
-              min={1}
-              max={100000}
-              required
-              value={cost}
-              onChange={(e) => setCost(Number(e.target.value))}
-              readOnly={!locked}
-              className="field read-only:bg-slate-50"
-            />
-          </label>
-          <label className="block">
-            <Label>Order</Label>
-            <input name="sortOrder" type="number" min={0} max={1000} required defaultValue={reward?.sortOrder ?? nextOrder ?? 1} readOnly={!locked} className="field read-only:bg-slate-50" />
-          </label>
-        </div>
-        <label className="block">
-          <Label>Description (optional)</Label>
-          <input name="description" maxLength={300} defaultValue={reward?.description} placeholder="Which card, where to buy it…" className="field" />
-        </label>
-        <div>
-          <Label>Picture</Label>
-          <div className="flex flex-wrap items-center gap-1.5">
-            {CREATURES.map((c) => (
-              <button
-                type="button"
-                key={c.id}
-                onClick={() => setImage(`art:${c.id}`)}
-                className={`rounded-lg p-1 transition ${image === `art:${c.id}` ? "bg-royal" : "bg-indigo-50 hover:bg-indigo-100"}`}
-                aria-label={`${c.name} card art`}
-                aria-pressed={image === `art:${c.id}`}
-              >
-                <Mascot creature={c.id} size={28} />
-              </button>
-            ))}
-          </div>
-          <input
-            type="url"
-            placeholder="…or paste a photo link (https://…)"
-            value={custom ? image : ""}
-            onChange={(e) => setImage(e.target.value || "art:embercub")}
-            className="field mt-2 text-sm"
-          />
-        </div>
-        {!locked && <p className="text-xs text-slate-500">This reward is unlocked, so its cost and owner can&apos;t change.</p>}
-        <div className="flex justify-end gap-2 border-t border-indigo-50 pt-4">
-          {reward && locked && <DeleteButton label="Delete" confirm={`Delete “${reward.title}”?`} run={() => deleteReward(reward.id)} />}
-          <button className="btn-primary" disabled={pending}>
-            {pending ? "Saving…" : reward ? "Save" : "Add reward"}
+    <form action={action} className="space-y-3">
+      <input type="hidden" name="childId" value={kid.id} />
+      <input type="hidden" name="kind" value={kind} />
+      <div className="flex gap-2">
+        {(
+          [
+            ["payout", "💵 Cash out"],
+            ["bonus", "🎁 Add bonus"],
+          ] as const
+        ).map(([k, label]) => (
+          <button
+            type="button"
+            key={k}
+            onClick={() => setKind(k)}
+            className={`flex-1 rounded-xl border px-3 py-2 text-sm font-semibold transition ${kind === k ? "border-royal bg-royal text-white" : "border-indigo-100 bg-white text-slate-700"}`}
+            aria-pressed={kind === k}
+          >
+            {label}
           </button>
-        </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-[1fr_1.4fr] gap-2">
+        <label className="block">
+          <Label>Amount ($)</Label>
+          <input name="amount" inputMode="decimal" required placeholder="5.00" value={amount} onChange={(e) => setAmount(e.target.value)} className="field" />
+        </label>
+        <label className="block">
+          <Label>Note (optional)</Label>
+          <input name="note" maxLength={120} placeholder={kind === "payout" ? "Ice cream money" : "Birthday money"} className="field" />
+        </label>
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs text-slate-500">
+          {Number.isFinite(cents) && cents > 0
+            ? `${kind === "payout" ? "−" : "+"}${cents.toLocaleString("en-US")} XP${kind === "payout" && cents > balanceCents ? " · more than the wallet has" : ""}`
+            : `Wallet: ${money(balanceCents)}`}
+        </p>
+        <button className="btn-primary" disabled={pending || (kind === "payout" && Number.isFinite(cents) && cents > balanceCents)}>
+          {pending ? "Saving…" : kind === "payout" ? "Pay out" : "Add money"}
+        </button>
       </div>
       <Flash result={state} />
     </form>
-  );
-}
-
-export function DeliveredToggle({ reward }: { reward: Reward }) {
-  const [result, setResult] = useState<ActionResult | null>(null);
-  const [pending, start] = useTransition();
-  const delivered = reward.status === "delivered";
-  return (
-    <>
-      <button
-        className={delivered ? "btn-ghost" : "btn bg-amber-400 text-slate-900 hover:bg-amber-300"}
-        disabled={pending}
-        onClick={() => start(async () => setResult(await setDelivered(reward.id, !delivered)))}
-      >
-        {pending ? "…" : delivered ? "✓ Handed over" : "Mark handed over"}
-      </button>
-      <Flash result={result} />
-    </>
   );
 }
 
@@ -279,7 +235,7 @@ export function ChildForm({ child }: { child?: Child }) {
         </div>
       </div>
       <div className="flex justify-end gap-2 border-t border-indigo-50 pt-4">
-        {child && <DeleteButton label="Remove" confirm={`Remove ${child.name}? Their XP, history and rewards are deleted.`} run={() => deleteChild(child.id)} />}
+        {child && <DeleteButton label="Remove" confirm={`Remove ${child.name}? Their wallet and history are deleted.`} run={() => deleteChild(child.id)} />}
         <button className="btn-primary" disabled={pending}>
           {pending ? "Saving…" : child ? "Save" : "Add kid"}
         </button>

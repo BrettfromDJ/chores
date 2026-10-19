@@ -3,11 +3,12 @@
 import { useOptimistic, useState, useTransition } from "react";
 import { turnInQuest } from "@/app/actions/kid";
 import { CoinIcon } from "@/components/game";
+import { money, xp } from "@/lib/money";
 import type { CompletionStatus } from "@/lib/types";
 
 interface Props {
   childId: string;
-  chore: { id: string; title: string; description: string; icon: string; xp: number };
+  chore: { id: string; title: string; description: string; icon: string; amountCents: number };
   status: CompletionStatus | null;
 }
 
@@ -43,8 +44,9 @@ export function QuestCard({ childId, chore, status }: Props) {
       </span>
       <div className="min-w-0 flex-1">
         <p className={`font-display text-[17px] leading-tight ${done ? "text-white/60 line-through decoration-2" : "text-white"}`}>{chore.title}</p>
-        <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-night/60 py-0.5 pl-0.5 pr-2 font-display text-[13px] text-gold">
-          <CoinIcon size={16} /> +{chore.xp} XP
+        <p className="mt-1 inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-night/60 py-0.5 pl-0.5 pr-2 font-display text-[13px] text-gold">
+          <CoinIcon size={16} /> +{xp(chore.amountCents)}
+          <span className="text-mint">· {money(chore.amountCents)}</span>
         </p>
         {error && <p className="mt-1 text-xs font-bold text-pink-300">{error}</p>}
       </div>

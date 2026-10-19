@@ -1,8 +1,10 @@
 export type Frequency = "daily" | "weekly";
 export type CompletionStatus = "pending" | "approved" | "rejected";
-export type RewardStatus = "locked" | "unlocked" | "delivered";
 
 export type CreatureId = "embercub" | "sproutle" | "splashkit" | "zapwing" | "pebblit" | "wispurr";
+
+/** All money is stored as integer cents. */
+export type Cents = number;
 
 export interface Family {
   id: string;
@@ -25,7 +27,8 @@ export interface Chore {
   title: string;
   description: string;
   icon: string;
-  xp: number;
+  /** What the quest pays when a parent approves it. */
+  amountCents: Cents;
   frequency: Frequency;
   childIds: string[];
   active: boolean;
@@ -40,50 +43,37 @@ export interface Completion {
   /** "2026-10-19" for daily quests, "2026-W43" for weekly quests */
   periodKey: string;
   status: CompletionStatus;
-  /** Snapshot of chore title/xp at submission time so history survives edits. */
+  /** Snapshot of chore title/pay at submission time so history survives edits. */
   choreTitle: string;
   choreIcon: string;
-  xp: number;
+  amountCents: Cents;
   submittedAt: string;
   reviewedAt: string | null;
   note: string | null;
 }
 
-export interface Reward {
-  id: string;
-  familyId: string;
-  childId: string;
-  title: string;
-  description: string;
-  /** http(s) URL of a photo, or "art:<creature>" for built-in card art. */
-  imageUrl: string;
-  xpCost: number;
-  /** Lower comes first. The first locked reward is the child's active goal. */
-  sortOrder: number;
-  status: RewardStatus;
-  unlockedAt: string | null;
-  revealedAt: string | null;
-  deliveredAt: string | null;
-  createdAt: string;
-}
+export type TransactionKind = "earned" | "bonus" | "payout";
 
-/** Ledger of XP movement. Only the server writes here. */
-export interface XpEvent {
+/** Wallet ledger. Only the server writes here; balance = sum(amountCents). */
+export interface Transaction {
   id: string;
   familyId: string;
   childId: string;
-  amount: number;
-  reason: "chore" | "reward";
-  refId: string;
+  /** Positive for money in, negative for money out. */
+  amountCents: Cents;
+  kind: TransactionKind;
+  /** Completion id for "earned". */
+  refId: string | null;
+  note: string | null;
   createdAt: string;
 }
 
 export interface ChildStats {
-  lifetimeXp: number;
-  balance: number;
+  lifetimeCents: Cents;
+  balanceCents: Cents;
   level: number;
   levelTitle: string;
-  levelFloor: number;
-  levelCeil: number;
+  levelFloor: Cents;
+  levelCeil: Cents;
   streak: number;
 }

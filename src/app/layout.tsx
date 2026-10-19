@@ -9,7 +9,7 @@ const ui = Inter({ subsets: ["latin"], variable: "--font-ui", display: "swap" })
 
 export const metadata: Metadata = {
   title: "PokéQuest",
-  description: "Turn real-life chores into quests. Earn XP, level up, and unlock card rewards.",
+  description: "Turn real-life chores into quests. Earn XP worth real money (100 XP = $1).",
   appleWebApp: { capable: true, title: "PokéQuest", statusBarStyle: "black-translucent" },
 };
 

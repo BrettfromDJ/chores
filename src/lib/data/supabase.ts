@@ -1,6 +1,6 @@
 import "server-only";
 import { supabaseServer } from "../supabase/server";
-import type { Child, Chore, Completion, Family, Reward, XpEvent } from "../types";
+import type { Child, Chore, Completion, Family, Transaction } from "../types";
 import { DuplicateSubmissionError, type Repo } from "./repo";
 
 /* Row <-> model mapping (snake_case in Postgres, camelCase in the app). */
@@ -22,7 +22,7 @@ const toChore = (r: Row): Chore => ({
   title: r.title as string,
   description: r.description as string,
   icon: r.icon as string,
-  xp: r.xp as number,
+  amountCents: r.amount_cents as number,
   frequency: r.frequency as Chore["frequency"],
   childIds: (r.child_ids as string[]) ?? [],
   active: r.active as boolean,
@@ -38,35 +38,20 @@ const toCompletion = (r: Row): Completion => ({
   status: r.status as Completion["status"],
   choreTitle: r.chore_title as string,
   choreIcon: r.chore_icon as string,
-  xp: r.xp as number,
+  amountCents: r.amount_cents as number,
   submittedAt: r.submitted_at as string,
   reviewedAt: (r.reviewed_at as string) ?? null,
   note: (r.note as string) ?? null,
 });
 
-const toReward = (r: Row): Reward => ({
+const toTransaction = (r: Row): Transaction => ({
   id: r.id as string,
   familyId: r.family_id as string,
   childId: r.child_id as string,
-  title: r.title as string,
-  description: r.description as string,
-  imageUrl: r.image_url as string,
-  xpCost: r.xp_cost as number,
-  sortOrder: r.sort_order as number,
-  status: r.status as Reward["status"],
-  unlockedAt: (r.unlocked_at as string) ?? null,
-  revealedAt: (r.revealed_at as string) ?? null,
-  deliveredAt: (r.delivered_at as string) ?? null,
-  createdAt: r.created_at as string,
-});
-
-const toXp = (r: Row): XpEvent => ({
-  id: r.id as string,
-  familyId: r.family_id as string,
-  childId: r.child_id as string,
-  amount: r.amount as number,
-  reason: r.reason as XpEvent["reason"],
-  refId: r.ref_id as string,
+  amountCents: r.amount_cents as number,
+  kind: r.kind as Transaction["kind"],
+  refId: (r.ref_id as string) ?? null,
+  note: (r.note as string) ?? null,
   createdAt: r.created_at as string,
 });
 
@@ -124,7 +109,7 @@ export const supabaseRepo: Repo = {
       title: input.title,
       description: input.description,
       icon: input.icon,
-      xp: input.xp,
+      amount_cents: input.amountCents,
       frequency: input.frequency,
       child_ids: input.childIds,
       active: input.active,
@@ -153,7 +138,7 @@ export const supabaseRepo: Repo = {
         period_key: input.periodKey,
         chore_title: input.choreTitle,
         chore_icon: input.choreIcon,
-        xp: input.xp,
+        amount_cents: input.amountCents,
         submitted_at: input.submittedAt,
       })
       .select()
@@ -163,55 +148,17 @@ export const supabaseRepo: Repo = {
   },
   async reviewCompletion(familyId, completionId, approve, note) {
     const db = await supabaseServer();
-    const unlocked = check(await db.rpc("review_completion", { p_completion: completionId, p_approve: approve, p_note: note })) as Row[];
-    const row = check(await db.from("completions").select("*").eq("id", completionId).eq("family_id", familyId).single());
-    return { completion: toCompletion(row), unlocked: (unlocked ?? []).map(toReward) };
+    check(await db.rpc("review_completion", { p_completion: completionId, p_approve: approve, p_note: note }));
+    return toCompletion(check(await db.from("completions").select("*").eq("id", completionId).eq("family_id", familyId).single()));
   },
 
-  async listRewards(familyId) {
+  async listTransactions(familyId) {
     const db = await supabaseServer();
-    return check(await db.from("rewards").select("*").eq("family_id", familyId).order("sort_order")).map(toReward);
+    return check(await db.from("transactions").select("*").eq("family_id", familyId).order("created_at", { ascending: false }).limit(5000)).map(toTransaction);
   },
-  async saveReward(familyId, input) {
+  async addTransaction(_familyId, input) {
     const db = await supabaseServer();
-    if (input.id) {
-      const existing = check(await db.from("rewards").select("status").eq("id", input.id).single());
-      if (existing.status !== "locked") {
-        check(await db.rpc("edit_unlocked_reward", { p_reward: input.id, p_title: input.title, p_description: input.description, p_image_url: input.imageUrl }));
-        return toReward(check(await db.from("rewards").select("*").eq("id", input.id).single()));
-      }
-    }
-    const fields = {
-      family_id: familyId,
-      child_id: input.childId,
-      title: input.title,
-      description: input.description,
-      image_url: input.imageUrl,
-      xp_cost: input.xpCost,
-      sort_order: input.sortOrder,
-    };
-    const q = input.id ? db.from("rewards").update(fields).eq("id", input.id) : db.from("rewards").insert(fields);
-    return toReward(check(await q.select().single()));
-  },
-  async deleteReward(familyId, rewardId) {
-    const db = await supabaseServer();
-    check(await db.from("rewards").delete().eq("id", rewardId).eq("family_id", familyId).eq("status", "locked"));
-  },
-  async settleRewards(_familyId, childId) {
-    const db = await supabaseServer();
-    return ((check(await db.rpc("settle_rewards", { p_child: childId })) as Row[]) ?? []).map(toReward);
-  },
-  async markRewardRevealed(_familyId, rewardId) {
-    const db = await supabaseServer();
-    check(await db.rpc("set_reward_flags", { p_reward: rewardId, p_revealed: true }));
-  },
-  async markRewardDelivered(_familyId, rewardId, delivered) {
-    const db = await supabaseServer();
-    check(await db.rpc("set_reward_flags", { p_reward: rewardId, p_delivered: delivered }));
-  },
-
-  async listXpEvents(familyId) {
-    const db = await supabaseServer();
-    return check(await db.from("xp_events").select("*").eq("family_id", familyId)).map(toXp);
+    const row = check(await db.rpc("add_transaction", { p_child: input.childId, p_kind: input.kind, p_amount: input.amountCents, p_note: input.note }));
+    return toTransaction(row as Row);
   },
 };

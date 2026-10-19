@@ -3,6 +3,7 @@ import { loadFamily } from "@/lib/queries";
 import { ChoreForm, Editable } from "@/components/parent/forms";
 import { Mascot } from "@/components/Mascot";
 import type { Child, Chore } from "@/lib/types";
+import { money } from "@/lib/money";
 
 export default async function QuestsAdmin() {
   const familyId = await requireParent();
@@ -17,7 +18,7 @@ export default async function QuestsAdmin() {
       <div className="flex items-end justify-between">
         <div>
           <h1 className="text-lg font-semibold tracking-tight">Quests</h1>
-          <p className="text-sm text-slate-500">Daily quests reset each morning, weekly quests every Monday.</p>
+          <p className="text-sm text-slate-500">Daily quests reset each morning, weekly quests every Monday. 100 XP = $1.</p>
         </div>
       </div>
 
@@ -61,7 +62,10 @@ function ChoreSummary({ chore, kids }: { chore: Chore; kids: Child[] }) {
           {assigned.length === 0 && <span className="text-xs text-amber-700">Not assigned</span>}
         </div>
       </div>
-      <span className="shrink-0 text-sm font-semibold text-emerald-600">{chore.xp} XP</span>
+      <span className="shrink-0 text-right text-sm font-semibold leading-tight text-emerald-600">
+        {chore.amountCents} XP
+        <span className="block text-xs font-medium text-slate-500">{money(chore.amountCents)}</span>
+      </span>
     </div>
   );
 }

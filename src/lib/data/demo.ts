@@ -3,11 +3,9 @@ import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { activeGoal } from "../game";
 import type { Repo } from "./repo";
 import { DuplicateSubmissionError } from "./repo";
-import { buildSeed, type DemoDb } from "./seed";
-import type { Reward } from "../types";
+import { buildSeed, DEMO_DB_VERSION, type DemoDb } from "./seed";
 
 /**
  * Demo storage: a single JSON file persisted to disk (.data/ locally, the OS
@@ -38,7 +36,9 @@ async function load(): Promise<DemoDb> {
   if (state.cache) return state.cache;
   const file = await resolvePath();
   try {
-    state.cache = JSON.parse(await fs.readFile(file, "utf8")) as DemoDb;
+    const parsed = JSON.parse(await fs.readFile(file, "utf8")) as DemoDb;
+    if (parsed.version !== DEMO_DB_VERSION) throw new Error("outdated demo data");
+    state.cache = parsed;
   } catch {
     state.cache = buildSeed(TIMEZONE);
     await persist(state.cache);
@@ -74,19 +74,8 @@ function notFound(what: string): never {
 
 const now = () => new Date().toISOString();
 
-function settle(db: DemoDb, familyId: string, childId: string): Reward[] {
-  const unlocked: Reward[] = [];
-  const balance = () => db.xpEvents.filter((e) => e.childId === childId).reduce((s, e) => s + e.amount, 0);
-  for (;;) {
-    const goal = activeGoal(db.rewards.filter((r) => r.familyId === familyId), childId);
-    if (!goal || balance() < goal.xpCost) break;
-    const reward = db.rewards.find((r) => r.id === goal.id)!;
-    reward.status = "unlocked";
-    reward.unlockedAt = now();
-    db.xpEvents.push({ id: randomUUID(), familyId, childId, amount: -reward.xpCost, reason: "reward", refId: reward.id, createdAt: now() });
-    unlocked.push(reward);
-  }
-  return unlocked;
+function balanceOf(db: DemoDb, childId: string) {
+  return db.transactions.filter((t) => t.childId === childId).reduce((s, t) => s + t.amountCents, 0);
 }
 
 export const demoRepo: Repo = {
@@ -119,8 +108,7 @@ export const demoRepo: Repo = {
       const owned = (x: { familyId: string; childId?: string }) => !(x.familyId === familyId && x.childId === childId);
       db.children = db.children.filter((c) => !(c.familyId === familyId && c.id === childId));
       db.completions = db.completions.filter(owned);
-      db.rewards = db.rewards.filter(owned);
-      db.xpEvents = db.xpEvents.filter(owned);
+      db.transactions = db.transactions.filter(owned);
       for (const chore of db.chores) if (chore.familyId === familyId) chore.childIds = chore.childIds.filter((id) => id !== childId);
     }),
 
@@ -132,7 +120,7 @@ export const demoRepo: Repo = {
         title: input.title,
         description: input.description,
         icon: input.icon,
-        xp: input.xp,
+        amountCents: input.amountCents,
         frequency: input.frequency,
         childIds: input.childIds.filter((id) => kids.has(id)),
         active: input.active,
@@ -171,61 +159,32 @@ export const demoRepo: Repo = {
       completion.status = approve ? "approved" : "rejected";
       completion.reviewedAt = now();
       completion.note = note;
-      let unlocked: Reward[] = [];
       if (approve) {
-        db.xpEvents.push({ id: randomUUID(), familyId, childId: completion.childId, amount: completion.xp, reason: "chore", refId: completion.id, createdAt: now() });
-        unlocked = settle(db, familyId, completion.childId);
+        db.transactions.push({ id: randomUUID(), familyId, childId: completion.childId, amountCents: completion.amountCents, kind: "earned", refId: completion.id, note: null, createdAt: now() });
       }
-      return { completion, unlocked };
+      return completion;
     }),
 
-  listRewards: (familyId) => read((db) => db.rewards.filter((r) => r.familyId === familyId)),
-  saveReward: (familyId, input) =>
+  listTransactions: (familyId) => read((db) => db.transactions.filter((t) => t.familyId === familyId)),
+  addTransaction: (familyId, input) =>
     write((db) => {
       if (!db.children.some((c) => c.id === input.childId && c.familyId === familyId)) notFound("Child");
-      const fields = {
+      if (!(input.amountCents > 0)) throw new Error("Amount must be more than zero.");
+      if (input.kind === "payout" && balanceOf(db, input.childId) < input.amountCents) throw new Error("That's more than what's in the wallet.");
+      const tx = {
+        id: randomUUID(),
+        familyId,
         childId: input.childId,
-        title: input.title,
-        description: input.description,
-        imageUrl: input.imageUrl,
-        xpCost: input.xpCost,
-        sortOrder: input.sortOrder,
+        amountCents: input.kind === "payout" ? -input.amountCents : input.amountCents,
+        kind: input.kind,
+        refId: null,
+        note: input.note,
+        createdAt: now(),
       };
-      if (input.id) {
-        const reward = db.rewards.find((r) => r.id === input.id && r.familyId === familyId) ?? notFound("Reward");
-        // Cost and owner are frozen once unlocked: the XP has already been spent.
-        if (reward.status !== "locked") Object.assign(reward, { title: fields.title, description: fields.description, imageUrl: fields.imageUrl });
-        else Object.assign(reward, fields);
-        return reward;
-      }
-      const reward: Reward = { id: randomUUID(), familyId, status: "locked", unlockedAt: null, revealedAt: null, deliveredAt: null, createdAt: now(), ...fields };
-      db.rewards.push(reward);
-      return reward;
+      db.transactions.push(tx);
+      return tx;
     }),
-  deleteReward: (familyId, rewardId) =>
-    write((db) => {
-      const reward = db.rewards.find((r) => r.id === rewardId && r.familyId === familyId);
-      if (!reward) return;
-      if (reward.status !== "locked") throw new Error("Unlocked rewards stay in the trophy case and can't be deleted.");
-      db.rewards = db.rewards.filter((r) => r.id !== rewardId);
-    }),
-  settleRewards: (familyId, childId) => write((db) => settle(db, familyId, childId)),
-  markRewardRevealed: (familyId, rewardId) =>
-    write((db) => {
-      const reward = db.rewards.find((r) => r.id === rewardId && r.familyId === familyId);
-      if (reward && reward.status !== "locked" && !reward.revealedAt) reward.revealedAt = now();
-    }),
-  markRewardDelivered: (familyId, rewardId, delivered) =>
-    write((db) => {
-      const reward = db.rewards.find((r) => r.id === rewardId && r.familyId === familyId) ?? notFound("Reward");
-      if (reward.status === "locked") throw new Error("This reward hasn't been unlocked yet.");
-      reward.status = delivered ? "delivered" : "unlocked";
-      reward.deliveredAt = delivered ? now() : null;
-    }),
-
-  listXpEvents: (familyId) => read((db) => db.xpEvents.filter((e) => e.familyId === familyId)),
 };
-
 export async function demoFindUser(email: string) {
   return read((db) => db.users.find((u) => u.email.toLowerCase() === email.toLowerCase()) ?? null);
 }

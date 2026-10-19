@@ -26,6 +26,20 @@ export function CoinIcon({ size = 24 }: { size?: number }) {
   );
 }
 
+export function CashIcon({ size = 24 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden>
+      <circle cx="12" cy="12" r="11" fill="#0b5a33" />
+      <rect x="4.5" y="7.5" width="15" height="9" rx="1.8" fill="#5ef08f" stroke="#0b5a33" strokeWidth="1.2" />
+      <circle cx="12" cy="12" r="2.6" fill="#18b24b" />
+      <text x="12" y="13.9" textAnchor="middle" fontSize="5" fontWeight="900" fill="#eafff1" fontFamily="system-ui">
+        $
+      </text>
+      <path d="M6 9.2h2M16 14.8h2" stroke="#0b5a33" strokeWidth="1" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function FlameIcon({ size = 24 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden>

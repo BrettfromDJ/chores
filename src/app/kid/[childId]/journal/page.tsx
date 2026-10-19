@@ -2,20 +2,23 @@ import { requireFamily } from "@/lib/auth/session";
 import { loadChild } from "@/lib/queries";
 import { localDate } from "@/lib/game";
 import { CoinIcon, LockIcon } from "@/components/game";
+import { money, signedMoney, xp } from "@/lib/money";
 
 type Entry =
   | { kind: "quest"; at: string; icon: string; title: string; xp: number; status: "pending" | "approved" | "rejected"; note: string | null }
-  | { kind: "reward"; at: string; title: string };
+  | { kind: "cash"; at: string; title: string; amount: number };
 
 export default async function JournalPage({ params }: { params: Promise<{ childId: string }> }) {
   const { childId } = await params;
   const familyId = await requireFamily();
-  const { badges, history, childRewards, stats, timezone } = await loadChild(familyId, childId);
+  const { badges, history, ledger, stats, timezone } = await loadChild(familyId, childId);
   const earned = badges.filter((b) => b.earned).length;
 
   const entries: Entry[] = [
-    ...history.slice(0, 60).map((c) => ({ kind: "quest" as const, at: c.submittedAt, icon: c.choreIcon, title: c.choreTitle, xp: c.xp, status: c.status, note: c.note })),
-    ...childRewards.filter((r) => r.unlockedAt).map((r) => ({ kind: "reward" as const, at: r.unlockedAt!, title: r.title })),
+    ...history.slice(0, 60).map((c) => ({ kind: "quest" as const, at: c.submittedAt, icon: c.choreIcon, title: c.choreTitle, xp: c.amountCents, status: c.status, note: c.note })),
+    ...ledger
+      .filter((t) => t.kind !== "earned")
+      .map((t) => ({ kind: "cash" as const, at: t.createdAt, title: t.note || (t.kind === "bonus" ? "Bonus" : "Cashed out"), amount: t.amountCents })),
   ].sort((a, b) => b.at.localeCompare(a.at));
 
   const groups = new Map<string, Entry[]>();
@@ -31,7 +34,7 @@ export default async function JournalPage({ params }: { params: Promise<{ childI
     <div className="grid gap-6 lg:grid-cols-2 lg:gap-8">
       <div className="space-y-6">
         <section className="grid grid-cols-3 gap-3 text-center">
-          <Stat label="Total XP" value={stats.lifetimeXp} />
+          <Stat label={`Earned · ${money(stats.lifetimeCents, { compact: true })}`} value={xp(stats.lifetimeCents).replace(" XP", "")} />
           <Stat label="Quests" value={history.filter((c) => c.status === "approved").length} />
           <Stat label="Badges" value={`${earned}/${badges.length}`} />
         </section>
@@ -71,10 +74,11 @@ export default async function JournalPage({ params }: { params: Promise<{ childI
               <p className="mb-1.5 px-1 text-xs font-extrabold uppercase tracking-wider text-cyan-glow">{dayLabel(day)}</p>
               <ul className="space-y-1.5">
                 {list.map((e, i) =>
-                  e.kind === "reward" ? (
-                    <li key={i} className="flex items-center gap-3 rounded-[14px] border-2 border-gold/70 bg-gradient-to-r from-gold/30 to-magenta-glow/20 px-3 py-2.5">
-                      <span className="text-2xl">🎁</span>
-                      <p className="flex-1 font-display text-[16px]">Unlocked {e.title}!</p>
+                  e.kind === "cash" ? (
+                    <li key={i} className="flex items-center gap-3 rounded-[14px] border-2 border-mint/60 bg-gradient-to-r from-mint/20 to-cyan-glow/10 px-3 py-2.5">
+                      <span className="text-2xl">{e.amount > 0 ? "🎁" : "💵"}</span>
+                      <p className="min-w-0 flex-1 truncate font-display text-[16px]">{e.title}</p>
+                      <span className={`font-display text-sm ${e.amount > 0 ? "text-gold" : "text-pink-200"}`}>{signedMoney(e.amount)}</span>
                     </li>
                   ) : (
                     <li key={i} className="panel-row flex items-center gap-3 px-3 py-2.5">

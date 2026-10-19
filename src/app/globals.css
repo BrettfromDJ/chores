@@ -168,47 +168,6 @@ body {
   }
 }
 
-/* ---------- Reward unlock sequence ---------- */
-@keyframes orb-drop {
-  0% { transform: translateY(-120vh); }
-  60% { transform: translateY(0); }
-  75% { transform: translateY(-28px); }
-  90% { transform: translateY(0); }
-  95% { transform: translateY(-6px); }
-  100% { transform: translateY(0); }
-}
-@keyframes orb-shake {
-  0%, 22%, 36%, 58%, 72%, 100% { transform: rotate(0); }
-  27% { transform: rotate(-20deg); }
-  32% { transform: rotate(12deg); }
-  63% { transform: rotate(20deg); }
-  68% { transform: rotate(-12deg); }
-  88% { transform: rotate(-20deg); }
-  94% { transform: rotate(12deg); }
-}
-@keyframes orb-top { to { transform: translateY(-90px) rotate(-25deg); opacity: 0; } }
-@keyframes orb-bottom { to { transform: translateY(90px) rotate(15deg); opacity: 0; } }
-@keyframes flash { 0% { opacity: 0; } 20% { opacity: 1; } 100% { opacity: 0; } }
-@keyframes card-in {
-  0% { transform: perspective(800px) rotateY(540deg) scale(.2); opacity: 0; }
-  60% { transform: perspective(800px) rotateY(-12deg) scale(1.08); opacity: 1; }
-  100% { transform: perspective(800px) rotateY(0) scale(1); }
-}
-@keyframes confetti {
-  0% { transform: translate(0, 0) rotate(0); opacity: 1; }
-  100% { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)); opacity: 0; }
-}
-@keyframes type-in { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: scale(1); } }
-
-.orb-drop { animation: orb-drop 0.9s cubic-bezier(.3, .7, .4, 1) both; }
-.orb-shake { animation: orb-shake 1.8s ease-in-out both; transform-origin: 50% 90%; }
-.orb-top { animation: orb-top .45s ease-in forwards; transform-box: fill-box; transform-origin: center; }
-.orb-bottom { animation: orb-bottom .45s ease-in forwards; transform-box: fill-box; transform-origin: center; }
-.flash { animation: flash .7s ease-out forwards; }
-.card-in { animation: card-in 1s cubic-bezier(.2, .9, .3, 1.1) both; }
-.confetti { animation: confetti 1.4s cubic-bezier(.1, .7, .3, 1) forwards; }
-.type-in { animation: type-in .5s cubic-bezier(.2, 1.4, .4, 1) both; }
-
 @layer components {
   .game-input {
     @apply w-full rounded-xl px-3.5 py-3 font-sans text-[16px] font-bold text-white outline-none transition placeholder:text-white/40;

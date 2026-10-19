@@ -1,16 +1,15 @@
 import Link from "next/link";
 import { requireFamily } from "@/lib/auth/session";
 import { loadFamily } from "@/lib/queries";
-import { activeGoal } from "@/lib/game";
-import { getCreature } from "@/lib/creatures";
-import { GameBar, GlowStage, LockIcon } from "@/components/game";
+import { CashIcon, CoinIcon, GlowStage, LockIcon } from "@/components/game";
 import { Mascot } from "@/components/Mascot";
+import { money } from "@/lib/money";
 
 export const dynamic = "force-dynamic";
 
 export default async function TrainerSelect() {
   const familyId = await requireFamily();
-  const { family, children, stats, rewards, completions } = await loadFamily(familyId);
+  const { family, children, stats, completions } = await loadFamily(familyId);
 
   return (
     <main className="game-bg relative min-h-dvh overflow-x-hidden pb-[max(2rem,env(safe-area-inset-bottom))]">
@@ -40,9 +39,7 @@ export default async function TrainerSelect() {
           <ul className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(300px,340px))] lg:justify-center">
             {children.map((child, i) => {
               const s = stats[child.id];
-              const goal = activeGoal(rewards, child.id);
               const pending = completions.filter((c) => c.childId === child.id && c.status === "pending").length;
-              const creature = getCreature(child.creature);
               return (
                 <li key={child.id} className="animate-slide-up" style={{ animationDelay: `${i * 90}ms` }}>
                   <Link href={`/kid/${child.id}`} className="panel group block overflow-hidden p-4 transition-transform active:scale-[.98] lg:hover:-translate-y-1">
@@ -57,24 +54,16 @@ export default async function TrainerSelect() {
                       <Mascot creature={child.creature} size={150} className="relative animate-bob drop-shadow-[0_10px_16px_rgba(20,18,74,.45)]" />
                     </GlowStage>
                     <div className="mt-1 flex items-center justify-between text-sm font-extrabold">
-                      <span className="text-white/80">
-                        {creature.name} · 🔥 {s.streak}
-                      </span>
+                      <span className="text-white/80">🔥 {s.streak}-day streak</span>
                       {pending > 0 && <span className="text-gold">⏳ {pending} waiting</span>}
                     </div>
-                    {goal ? (
-                      <GameBar
-                        className="mt-2"
-                        value={s.balance}
-                        max={goal.xpCost}
-                        from="#ffe066"
-                        to="#f5a000"
-                        ariaLabel="Reward progress"
-                        label={`🎯 ${goal.title}`}
-                      />
-                    ) : (
-                      <p className="mt-2 text-center font-display text-gold">🏆 All goals unlocked!</p>
-                    )}
+                    <div className="panel-row mt-2 flex items-center gap-2 px-3 py-2">
+                      <CoinIcon size={22} />
+                      <span className="font-display text-lg">{s.balanceCents.toLocaleString("en-US")} XP</span>
+                      <span className="ml-auto flex items-center gap-1.5 font-display text-lg text-mint">
+                        <CashIcon size={22} /> {money(s.balanceCents)}
+                      </span>
+                    </div>
                     <span className="btn-game btn-yellow mt-4 w-full !py-3.5 !text-2xl">Play</span>
                   </Link>
                 </li>
@@ -83,7 +72,7 @@ export default async function TrainerSelect() {
           </ul>
         )}
         <p className="mt-8 flex items-center justify-center gap-1.5 text-center text-xs font-bold text-white/50">
-          <LockIcon size={14} /> XP is only awarded after a parent approves.
+          <LockIcon size={14} /> 100 XP = $1 · XP is only paid after a parent approves.
         </p>
       </div>
     </main>

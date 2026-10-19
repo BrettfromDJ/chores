@@ -3,6 +3,7 @@ import { loadFamily } from "@/lib/queries";
 import { ChildForm, Editable } from "@/components/parent/forms";
 import { Mascot } from "@/components/Mascot";
 import { getCreature } from "@/lib/creatures";
+import { money } from "@/lib/money";
 
 export default async function TrainersAdmin() {
   const familyId = await requireParent();
@@ -11,7 +12,7 @@ export default async function TrainersAdmin() {
     <div className="space-y-6">
       <div>
         <h1 className="text-lg font-semibold tracking-tight">Kids</h1>
-        <p className="text-sm text-slate-500">Each kid gets their own profile, partner creature, XP and reward goals.</p>
+        <p className="text-sm text-slate-500">Each kid gets their own profile, partner creature and XP wallet.</p>
       </div>
       <Editable summary={<span className="text-sm font-semibold">＋ Add a kid</span>} defaultOpen={children.length === 0}>
         <ChildForm />
@@ -28,7 +29,7 @@ export default async function TrainersAdmin() {
                 <div>
                   <p className="font-medium">{kid.name}</p>
                   <p className="text-xs text-slate-500">
-                    {getCreature(kid.creature).name} · Level {stats[kid.id].level} · {stats[kid.id].lifetimeXp} XP
+                    {getCreature(kid.creature).name} · Level {stats[kid.id].level} · {money(stats[kid.id].balanceCents)} in wallet
                   </p>
                 </div>
               </div>
