@@ -33,7 +33,8 @@ Demo data lives in `.data/pokequest.json`; delete that file (or use **Parent →
 1. A kid taps **Done!** → a *pending* completion is stored. Nothing is paid.
 2. A parent approves on the server → the quest's XP is written to the kid's wallet ledger.
 3. **100 XP = $1.** Every amount is stored as integer XP (1 XP = 1 cent), so there are no rounding issues.
-4. When a parent hands over real money, they record a **Cash out**, which can never exceed the balance. **Bonuses** (birthday money, etc.) add to the wallet.
+4. **Every level-up pays a $1 bonus** (100 XP), added automatically on the server, and the kid sees a "Level Up!" celebration. Levels count quest XP and parent bonuses, not the level-up bonus itself, so bonuses can't cascade.
+5. When a parent hands over real money, they record a **Cash out**, which can never exceed the balance. **Bonuses** (birthday money, etc.) add to the wallet.
 
 Levels and money badges are based on lifetime XP earned. The wallet balance is the sum of the ledger.
 

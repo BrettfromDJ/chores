@@ -16,6 +16,23 @@ export function levelFromCents(cents: number) {
   return level;
 }
 
+/** Paid automatically each time a kid reaches a new level: 100 XP = $1. Keep in sync with supabase/schema.sql. */
+export const LEVEL_UP_BONUS = 100;
+
+/** XP that counts toward levels: quests and parent bonuses, never level-up bonuses (so they can't cascade). */
+export function lifetimeEarned(transactions: Transaction[], childId: string) {
+  return transactions.filter((t) => t.childId === childId && (t.kind === "earned" || t.kind === "bonus")).reduce((s, t) => s + t.amountCents, 0);
+}
+
+/** Levels the kid has reached but hasn't been paid for yet (levels never go down). */
+export function unpaidLevels(transactions: Transaction[], childId: string) {
+  const paid = transactions.filter((t) => t.childId === childId && t.kind === "level_up").length;
+  const level = levelFromCents(lifetimeEarned(transactions, childId));
+  const missing: number[] = [];
+  for (let n = paid + 2; n <= level; n++) missing.push(n);
+  return missing;
+}
+
 export function levelTitle(level: number) {
   return TITLES[Math.min(TITLES.length - 1, Math.floor((level - 1) / 2))];
 }
@@ -23,7 +40,7 @@ export function levelTitle(level: number) {
 /** Balance is the sum of the ledger; lifetime counts money earned from quests and bonuses. */
 export function computeStats(childId: string, transactions: Transaction[], completions: Completion[], timezone: string): ChildStats {
   const mine = transactions.filter((t) => t.childId === childId);
-  const lifetimeCents = mine.filter((t) => t.kind === "earned" || t.kind === "bonus").reduce((s, t) => s + t.amountCents, 0);
+  const lifetimeCents = lifetimeEarned(transactions, childId);
   const balanceCents = mine.reduce((s, t) => s + t.amountCents, 0);
   const level = levelFromCents(lifetimeCents);
   return {

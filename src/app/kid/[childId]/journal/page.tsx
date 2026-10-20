@@ -6,7 +6,7 @@ import { money, signedMoney, xp } from "@/lib/money";
 
 type Entry =
   | { kind: "quest"; at: string; icon: string; title: string; xp: number; status: "pending" | "approved" | "rejected"; note: string | null }
-  | { kind: "cash"; at: string; title: string; amount: number };
+  | { kind: "cash"; at: string; title: string; amount: number; icon: string };
 
 export default async function JournalPage({ params }: { params: Promise<{ childId: string }> }) {
   const { childId } = await params;
@@ -18,7 +18,13 @@ export default async function JournalPage({ params }: { params: Promise<{ childI
     ...history.slice(0, 60).map((c) => ({ kind: "quest" as const, at: c.submittedAt, icon: c.choreIcon, title: c.choreTitle, xp: c.amountCents, status: c.status, note: c.note })),
     ...ledger
       .filter((t) => t.kind !== "earned")
-      .map((t) => ({ kind: "cash" as const, at: t.createdAt, title: t.note || (t.kind === "bonus" ? "Bonus" : "Cashed out"), amount: t.amountCents })),
+      .map((t) => ({
+        kind: "cash" as const,
+        at: t.createdAt,
+        title: t.note || (t.kind === "bonus" ? "Bonus" : t.kind === "level_up" ? "Level up!" : "Cashed out"),
+        amount: t.amountCents,
+        icon: t.kind === "level_up" ? "⭐" : t.kind === "bonus" ? "🎁" : "💵",
+      })),
   ].sort((a, b) => b.at.localeCompare(a.at));
 
   const groups = new Map<string, Entry[]>();
@@ -76,7 +82,7 @@ export default async function JournalPage({ params }: { params: Promise<{ childI
                 {list.map((e, i) =>
                   e.kind === "cash" ? (
                     <li key={i} className="flex items-center gap-3 rounded-[14px] border-2 border-mint/60 bg-gradient-to-r from-mint/20 to-cyan-glow/10 px-3 py-2.5">
-                      <span className="text-2xl">{e.amount > 0 ? "🎁" : "💵"}</span>
+                      <span className="text-2xl">{e.icon}</span>
                       <p className="min-w-0 flex-1 truncate font-display text-[16px]">{e.title}</p>
                       <span className={`font-display text-sm ${e.amount > 0 ? "text-gold" : "text-pink-200"}`}>{signedMoney(e.amount)}</span>
                     </li>

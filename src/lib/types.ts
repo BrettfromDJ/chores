@@ -52,7 +52,8 @@ export interface Completion {
   note: string | null;
 }
 
-export type TransactionKind = "earned" | "bonus" | "payout";
+/** "level_up" is the automatic $1 paid each time a kid reaches a new level. */
+export type TransactionKind = "earned" | "bonus" | "payout" | "level_up";
 
 /** Wallet ledger. Only the server writes here; balance = sum(amountCents). */
 export interface Transaction {

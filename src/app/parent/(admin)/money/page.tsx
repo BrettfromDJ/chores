@@ -8,6 +8,7 @@ const KIND = {
   earned: { label: "Quest", tone: "bg-emerald-100 text-emerald-800" },
   bonus: { label: "Bonus", tone: "bg-sky-100 text-sky-800" },
   payout: { label: "Cash out", tone: "bg-amber-100 text-amber-800" },
+  level_up: { label: "Level up", tone: "bg-violet-100 text-violet-800" },
 } as const;
 
 export default async function MoneyAdmin() {
@@ -15,7 +16,9 @@ export default async function MoneyAdmin() {
   const { children, stats, transactions, completions, timezone } = await loadFamily(familyId);
   const kids = new Map(children.map((c) => [c.id, c]));
   const titles = new Map(completions.map((c) => [c.id, c.choreTitle]));
-  const recent = [...transactions].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 60);
+  const recent = [...transactions]
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || Number(b.kind === "level_up") - Number(a.kind === "level_up"))
+    .slice(0, 60);
   const owed = children.reduce((s, c) => s + stats[c.id].balanceCents, 0);
   const fmt = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: timezone });
 
@@ -24,7 +27,7 @@ export default async function MoneyAdmin() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-lg font-semibold tracking-tight">Money</h1>
-          <p className="text-sm text-slate-500">Kids earn XP from approved quests. 100 XP = $1. Cash out when you hand over real money.</p>
+          <p className="text-sm text-slate-500">Kids earn XP from approved quests (100 XP = $1), plus $1 every time they level up. Cash out when you hand over real money.</p>
         </div>
         <div className="card px-4 py-2 text-right">
           <p className="text-xs text-slate-500">Total in kids&apos; wallets</p>

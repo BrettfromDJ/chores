@@ -4,7 +4,7 @@ import { loadChild } from "@/lib/queries";
 import { getCreature } from "@/lib/creatures";
 import { CashIcon, CoinIcon, LevelMeter, Stage } from "@/components/game";
 import { QuestCard } from "@/components/kid/QuestCard";
-import type { QuestItem } from "@/lib/game";
+import { LEVEL_UP_BONUS, type QuestItem } from "@/lib/game";
 import { money, xp } from "@/lib/money";
 
 export default async function QuestsPage({ params }: { params: Promise<{ childId: string }> }) {
@@ -38,7 +38,7 @@ export default async function QuestsPage({ params }: { params: Promise<{ childId
             level={stats.level}
             value={stats.lifetimeCents - stats.levelFloor}
             max={stats.levelCeil - stats.levelFloor}
-            caption={`${xp(stats.levelCeil - stats.lifetimeCents)} to level ${stats.level + 1}`}
+            caption={`${xp(stats.levelCeil - stats.lifetimeCents)} to level ${stats.level + 1} · +${money(LEVEL_UP_BONUS, { compact: true })} bonus`}
           />
         </div>
 

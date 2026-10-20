@@ -28,7 +28,10 @@ export const loadChild = cache(async (familyId: string, childId: string) => {
   const stats = data.stats[child.id];
   const completions = data.completions.filter((c) => c.childId === child.id).sort((a, b) => b.submittedAt.localeCompare(a.submittedAt));
   const approved = completions.filter((c) => c.status === "approved");
-  const ledger = data.transactions.filter((t) => t.childId === child.id).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  // Newest first; a level-up shares its trigger's timestamp, so list it above the trigger.
+  const ledger = data.transactions
+    .filter((t) => t.childId === child.id)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || Number(b.kind === "level_up") - Number(a.kind === "level_up"));
   return {
     ...data,
     child,

@@ -1,7 +1,7 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { hashSecret } from "../auth/password";
-import { periodKey } from "../game";
+import { LEVEL_UP_BONUS, levelFromCents, periodKey } from "../game";
 import type { Child, Chore, Completion, Family, Transaction } from "../types";
 
 export const DEMO_EMAIL = "parent@pokequest.demo";
@@ -9,7 +9,7 @@ export const DEMO_PASSWORD = "trainer123";
 export const DEMO_PIN = "1234";
 
 /** Bump when the stored shape changes; older demo files are reseeded. */
-export const DEMO_DB_VERSION = 4;
+export const DEMO_DB_VERSION = 5;
 
 export interface DemoUser {
   email: string;
@@ -116,6 +116,23 @@ export function buildSeed(timezone: string, now = new Date()): DemoDb {
   }
   add(leo, byId("ch_plants"), daysAgo(9), "approved");
   add(leo, byId("ch_read"), daysAgo(0, 16), "pending");
+
+  // Pay the $1 level-up bonus at the moment each kid crossed into a new level.
+  for (const child of [mia, leo]) {
+    const counted = transactions
+      .filter((t) => t.childId === child.id && (t.kind === "earned" || t.kind === "bonus"))
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    let total = 0;
+    let level = 1;
+    for (const t of counted) {
+      total += t.amountCents;
+      while (levelFromCents(total) > level) {
+        level++;
+        const at = new Date(new Date(t.createdAt).getTime() + 1000).toISOString();
+        transactions.push({ id: randomUUID(), familyId, childId: child.id, amountCents: LEVEL_UP_BONUS, kind: "level_up", refId: null, note: `Reached level ${level}!`, createdAt: at });
+      }
+    }
+  }
 
   return {
     version: DEMO_DB_VERSION,

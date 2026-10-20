@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { LEVEL_UP_BONUS, unpaidLevels } from "../game";
 import type { Repo } from "./repo";
 import { DuplicateSubmissionError } from "./repo";
 import { buildSeed, DEMO_DB_VERSION, type DemoDb } from "./seed";
@@ -76,6 +77,14 @@ const now = () => new Date().toISOString();
 
 function balanceOf(db: DemoDb, childId: string) {
   return db.transactions.filter((t) => t.childId === childId).reduce((s, t) => s + t.amountCents, 0);
+}
+
+/** Pay $1 for every level reached but not yet paid. Runs after any change that adds lifetime XP. */
+function payLevelBonuses(db: DemoDb, familyId: string, childId: string) {
+  const familyTx = db.transactions.filter((t) => t.familyId === familyId);
+  for (const level of unpaidLevels(familyTx, childId)) {
+    db.transactions.push({ id: randomUUID(), familyId, childId, amountCents: LEVEL_UP_BONUS, kind: "level_up", refId: null, note: `Reached level ${level}!`, createdAt: now() });
+  }
 }
 
 export const demoRepo: Repo = {
@@ -161,6 +170,7 @@ export const demoRepo: Repo = {
       completion.note = note;
       if (approve) {
         db.transactions.push({ id: randomUUID(), familyId, childId: completion.childId, amountCents: completion.amountCents, kind: "earned", refId: completion.id, note: null, createdAt: now() });
+        payLevelBonuses(db, familyId, completion.childId);
       }
       return completion;
     }),
@@ -182,6 +192,7 @@ export const demoRepo: Repo = {
         createdAt: now(),
       };
       db.transactions.push(tx);
+      if (input.kind === "bonus") payLevelBonuses(db, familyId, input.childId);
       return tx;
     }),
 };

@@ -10,6 +10,7 @@ const KIND = {
   earned: { icon: "⚔️", label: "Quest" },
   bonus: { icon: "🎁", label: "Bonus" },
   payout: { icon: "💵", label: "Cashed out" },
+  level_up: { icon: "⭐", label: "Level-up bonus" },
 } as const;
 
 export default async function WalletPage({ params }: { params: Promise<{ childId: string }> }) {

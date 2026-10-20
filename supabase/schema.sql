@@ -69,7 +69,7 @@ create table if not exists public.transactions (
   family_id uuid not null references public.families (id) on delete cascade,
   child_id uuid not null references public.children (id) on delete cascade,
   amount_cents int not null check (amount_cents <> 0),
-  kind text not null check (kind in ('earned', 'bonus', 'payout')),
+  kind text not null,
   ref_id uuid,
   note text,
   created_at timestamptz not null default now()
@@ -77,6 +77,11 @@ create table if not exists public.transactions (
 
 create index if not exists completions_family_idx on public.completions (family_id, submitted_at desc);
 create index if not exists transactions_child_idx on public.transactions (child_id);
+
+-- Kept separate from the table so re-running this script upgrades older installs.
+alter table public.transactions drop constraint if exists transactions_kind_check;
+alter table public.transactions add constraint transactions_kind_check
+  check (kind in ('earned', 'bonus', 'payout', 'level_up'));
 
 -- Create the family row when a parent signs up.
 create or replace function public.handle_new_parent()
@@ -144,6 +149,31 @@ begin
   return v_family;
 end $$;
 
+-- $1 (100 XP) for every level reached but not yet paid. Levels count quest XP and
+-- parent bonuses only, so the level-up bonus itself can't cascade.
+-- Keep in sync with LEVEL_UP_BONUS / centsForLevel in src/lib/game.ts.
+create or replace function public.pay_level_bonuses(p_child uuid)
+returns void language plpgsql security definer set search_path = public as $$
+declare
+  v_family uuid;
+  v_lifetime int;
+  v_level int := 1;
+  v_paid int;
+  n int;
+begin
+  v_family := public.lock_child(p_child);
+  select coalesce(sum(amount_cents), 0) into v_lifetime
+    from public.transactions where child_id = p_child and kind in ('earned', 'bonus');
+  while 250 * (v_level + 1) * v_level <= v_lifetime loop
+    v_level := v_level + 1;
+  end loop;
+  select count(*) into v_paid from public.transactions where child_id = p_child and kind = 'level_up';
+  for n in (v_paid + 2)..v_level loop
+    insert into public.transactions (family_id, child_id, amount_cents, kind, note)
+      values (v_family, p_child, 100, 'level_up', format('Reached level %s!', n));
+  end loop;
+end $$;
+
 -- Return type changed across versions; drop first so the script can be re-run.
 drop function if exists public.review_completion(uuid, boolean, text);
 create or replace function public.review_completion(p_completion uuid, p_approve boolean, p_note text default null)
@@ -167,6 +197,7 @@ begin
   if p_approve then
     insert into public.transactions (family_id, child_id, amount_cents, kind, ref_id)
       values (v_row.family_id, v_row.child_id, v_row.amount_cents, 'earned', v_row.id);
+    perform public.pay_level_bonuses(v_row.child_id);
   end if;
 end $$;
 
@@ -186,6 +217,9 @@ begin
   insert into public.transactions (family_id, child_id, amount_cents, kind, note)
     values (v_family, p_child, case when p_kind = 'payout' then -p_amount else p_amount end, p_kind, p_note)
     returning * into v_tx;
+  if p_kind = 'bonus' then
+    perform public.pay_level_bonuses(p_child);
+  end if;
   return v_tx;
 end $$;
 
@@ -194,7 +228,7 @@ declare
   f text;
 begin
   foreach f in array array[
-    'child_balance(uuid)', 'lock_child(uuid)',
+    'child_balance(uuid)', 'lock_child(uuid)', 'pay_level_bonuses(uuid)',
     'review_completion(uuid, boolean, text)', 'add_transaction(uuid, text, int, text)'
   ] loop
     execute format('revoke all on function public.%s from public, anon', f);
