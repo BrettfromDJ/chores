@@ -104,7 +104,7 @@ export function GameBar({
       aria-label={ariaLabel}
     >
       <div
-        className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-700 ease-out"
+        className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-[400ms] ease-out"
         style={{ width: `${pct}%`, background: `linear-gradient(180deg, ${from}, ${to})`, boxShadow: "inset 0 2px 0 rgba(255,255,255,.45)" }}
       />
       {label && (
@@ -159,11 +159,11 @@ export function BackButton({ href, label = "Back" }: { href: string; label?: str
 
 const ARROWS = [
   { left: "8%", size: 26, delay: "0s" },
-  { left: "22%", size: 16, delay: "1.1s" },
-  { left: "78%", size: 30, delay: ".5s" },
-  { left: "88%", size: 18, delay: "1.7s" },
-  { left: "34%", size: 14, delay: "2.1s" },
-  { left: "66%", size: 20, delay: "1.4s" },
+  { left: "22%", size: 16, delay: ".6s" },
+  { left: "78%", size: 30, delay: ".3s" },
+  { left: "88%", size: 18, delay: "1s" },
+  { left: "34%", size: 14, delay: "1.2s" },
+  { left: "66%", size: 20, delay: ".8s" },
 ];
 
 /** Hero stage: content over a pink glow with rising arrows and sparkles. */
@@ -197,7 +197,7 @@ export function GlowStage({ className = "", children, arrows = true }: { classNa
         <span
           key={x}
           className="pointer-events-none absolute h-1.5 w-1.5 animate-twinkle rounded-full bg-white"
-          style={{ left: `${x}%`, top: `${15 + ((i * 23) % 50)}%`, animationDelay: `${i * 0.5}s` }}
+          style={{ left: `${x}%`, top: `${15 + ((i * 23) % 50)}%`, animationDelay: `${i * 0.3}s` }}
           aria-hidden
         />
       ))}

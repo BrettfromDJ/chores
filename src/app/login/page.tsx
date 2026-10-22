@@ -14,9 +14,9 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
     <main className="game-bg flex min-h-dvh flex-col items-center justify-center overflow-hidden px-5 py-10">
       <GlowStage className="h-48 w-full max-w-sm">
         <div className="relative flex items-end">
-          <Mascot creature="sproutle" size={92} className="-mr-4 animate-bob [animation-delay:.4s]" />
+          <Mascot creature="sproutle" size={92} className="-mr-4 animate-bob [animation-delay:.25s]" />
           <Mascot creature="embercub" size={130} className="relative z-10 animate-bob" />
-          <Mascot creature="splashkit" size={92} className="-ml-4 animate-bob [animation-delay:.8s]" />
+          <Mascot creature="splashkit" size={92} className="-ml-4 animate-bob [animation-delay:.5s]" />
         </div>
       </GlowStage>
       <h1 className="text-game mt-2 text-6xl leading-none">

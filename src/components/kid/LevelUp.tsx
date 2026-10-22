@@ -28,7 +28,7 @@ export function LevelUp({ txId, level, amount, creature, kidName }: { txId: stri
       Array.from({ length: 40 }, (_, i) => {
         const angle = (i / 40) * Math.PI * 2;
         const dist = 150 + ((i * 37) % 140);
-        return { dx: `${Math.cos(angle) * dist}px`, dy: `${Math.sin(angle) * dist}px`, rot: `${(i * 83) % 720}deg`, size: 7 + (i % 4) * 2, color: COLORS[i % COLORS.length], round: i % 3 === 0, delay: (i % 5) * 0.04 };
+        return { dx: `${Math.cos(angle) * dist}px`, dy: `${Math.sin(angle) * dist}px`, rot: `${(i * 83) % 720}deg`, size: 7 + (i % 4) * 2, color: COLORS[i % COLORS.length], round: i % 3 === 0, delay: (i % 5) * 0.02 };
       }),
     [],
   );
@@ -66,7 +66,7 @@ export function LevelUp({ txId, level, amount, creature, kidName }: { txId: stri
           />
         ))}
         <Mascot creature={creature} size={190} className="relative animate-bob drop-shadow-[0_10px_20px_rgba(20,18,74,.5)]" />
-        <span className="level-in absolute -right-2 top-2 flex h-20 w-[72px] items-center justify-center [animation-delay:.25s]">
+        <span className="level-in absolute -right-2 top-2 flex h-20 w-[72px] items-center justify-center [animation-delay:.12s]">
           <svg viewBox="0 0 40 44" className="absolute inset-0 h-full w-full" aria-hidden>
             <path d="M20 2l17 10v20L20 42 3 32V12z" fill="#2f4fe0" stroke="#14124a" strokeWidth="3" strokeLinejoin="round" />
             <path d="M20 7l12 7v4H8v-4z" fill="#fff" opacity=".18" />
@@ -77,7 +77,7 @@ export function LevelUp({ txId, level, amount, creature, kidName }: { txId: stri
 
       <div className="relative mt-4 max-w-xs text-center">
         <p className="text-game text-2xl">You reached level {level}, {kidName}!</p>
-        <p className="level-in mx-auto mt-4 flex w-fit items-center gap-2 rounded-2xl border-2 border-mint/70 bg-mint/20 px-4 py-2 font-display text-2xl text-mint [animation-delay:.5s]">
+        <p className="level-in mx-auto mt-4 flex w-fit items-center gap-2 rounded-2xl border-2 border-mint/70 bg-mint/20 px-4 py-2 font-display text-2xl text-mint [animation-delay:.25s]">
           <CashIcon size={30} /> +{money(amount)} bonus
         </p>
         <p className="mt-2 font-bold text-white/75">Added to your wallet. Keep questing!</p>

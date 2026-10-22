@@ -41,7 +41,7 @@ export default async function TrainerSelect() {
               const s = stats[child.id];
               const pending = completions.filter((c) => c.childId === child.id && c.status === "pending").length;
               return (
-                <li key={child.id} className="animate-slide-up" style={{ animationDelay: `${i * 90}ms` }}>
+                <li key={child.id} className="animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
                   <Link href={`/kid/${child.id}`} className="panel group block overflow-hidden p-4 transition-transform active:scale-[.98] lg:hover:-translate-y-1">
                     <div className="flex items-start justify-between">
                       <div>

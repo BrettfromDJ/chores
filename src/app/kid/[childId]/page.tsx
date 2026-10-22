@@ -63,7 +63,7 @@ export default async function QuestsPage({ params }: { params: Promise<{ childId
       <Stage creature={child.creature} size={210} className="order-first -my-2 h-[250px] lg:order-2 lg:mt-6 lg:h-[440px]" />
 
       {/* Right: quests */}
-      <section className="panel animate-slide-up p-4 [animation-delay:.1s] lg:order-3">
+      <section className="panel animate-slide-up p-4 [animation-delay:.05s] lg:order-3">
         {empty ? (
           <p className="py-8 text-center font-bold text-white/80">No quests yet! Ask a parent to add some.</p>
         ) : (
@@ -88,7 +88,7 @@ function QuestGroup({ title, hint, items, childId }: { title: string; hint: stri
       </div>
       <ul className="space-y-2">
         {items.map((q, i) => (
-          <li key={q.chore.id} className="animate-slide-up" style={{ animationDelay: `${i * 50}ms` }}>
+          <li key={q.chore.id} className="animate-slide-up" style={{ animationDelay: `${i * 30}ms` }}>
             <QuestCard
               childId={childId}
               chore={{ id: q.chore.id, title: q.chore.title, description: q.chore.description, icon: q.chore.icon, amountCents: q.chore.amountCents }}

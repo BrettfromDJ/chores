@@ -33,10 +33,10 @@ export default async function WalletPage({ params }: { params: Promise<{ childId
         <GlowStage className="h-[210px]" arrows={false}>
           <div className="relative flex items-end">
             <Mascot creature={child.creature} size={150} className="relative z-10 animate-bob drop-shadow-[0_10px_16px_rgba(20,18,74,.45)]" />
-            <span className="absolute -right-10 bottom-6 animate-bob text-5xl [animation-delay:.4s]" aria-hidden>
+            <span className="absolute -right-10 bottom-6 animate-bob text-5xl [animation-delay:.25s]" aria-hidden>
               🪙
             </span>
-            <span className="absolute -left-10 bottom-12 animate-bob text-4xl [animation-delay:.9s]" aria-hidden>
+            <span className="absolute -left-10 bottom-12 animate-bob text-4xl [animation-delay:.5s]" aria-hidden>
               💵
             </span>
           </div>
